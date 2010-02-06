@@ -86,6 +86,9 @@ clean-unused-packages.sh
 
 echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
 
+# Bzip any log files larger than 100k
+bzip_large_logs 102400
+
 # If we are being run from cron then send email logs to the administrator and
 # end the redirect of 1&2 otherwise display summary message.
 get_log_files logfiles
