@@ -33,7 +33,7 @@ echo "done."
 free-distfiles-space.sh $reqSpace
 
 # Do a pretend update for the logs
-echo -n "Performing pretent update..."
+echo -n "Performing pretend update..."
 exec_and_log pretend_update "emerge -pvuDN world"
 echo "done."
 
