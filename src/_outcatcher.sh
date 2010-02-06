@@ -4,7 +4,7 @@ __logfiles=""
 __logpath=""
 __logszipped=false
 
-# Initialise logging
+# Initialise logging by creating an empty folder
 # $1 should contain the base path for log files
 function init_logging()
 {
@@ -12,6 +12,7 @@ function init_logging()
 
 	__logpath="${1}"
 	mkdir -p ${__logpath}
+	rm ${__logpath}/* -f
 }
 
 # Execute a command and log stdout and stderr to files
@@ -24,7 +25,7 @@ function exec_and_log()
 	l1="${__logpath}/${1}.out.log"
 	l2="${__logpath}/${1}.err.log"
 
-	$( $2 1> $l1 2> $l2 )
+	$( $2 1>> $l1 2>> $l2 )
 
 	[ ! -s ${l1} ] && rm ${l1}
 	[ ! -s ${l2} ] && rm ${l2}

@@ -9,8 +9,8 @@ if [ -n "$BUILDSPACE_NAME" ]; then
   exit
 fi
 
-chroot /mnt/buildspaces/x86-64bit-server /usr/local/sbin/do-update
-chroot /mnt/buildspaces/x86-64bit-workstation /usr/local/sbin/do-update
+chroot /mnt/buildspaces/x86-64bit-server /usr/local/sbin/do-update.sh
+chroot /mnt/buildspaces/x86-64bit-workstation /usr/local/sbin/do-update.sh
 
-linux32 chroot /mnt/buildspaces/x86-32bit-server /usr/local/sbin/do-update
-linux32 chroot /mnt/buildspaces/x86-32bit-workstation /usr/local/sbin/do-update
+linux32 chroot /mnt/buildspaces/x86-32bit-server /usr/local/sbin/do-update.sh
+linux32 chroot /mnt/buildspaces/x86-32bit-workstation /usr/local/sbin/do-update.sh
