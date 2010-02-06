@@ -8,7 +8,7 @@ __logszipped=false
 # $1 should contain the base path for log files
 function init_logging()
 {
-	[ -n "${__logpath}" ] && echo "ERROR!  Logging already initialised." && exit
+	[ -n "${__logpath}" ] && echo "ERROR! Logging already initialised." && exit
 
 	__logpath="${1}"
 	mkdir -p ${__logpath}
@@ -19,7 +19,7 @@ function init_logging()
 # $2 should contain the command to execute
 function exec_and_log()
 {
-	[ -z "${__logpath}" ] && echo "ERROR!  Logging not initialised." && exit
+	[ -z "${__logpath}" ] && echo "ERROR! Logging not initialised." && exit
 
 	l1="${__logpath}/${1}.out.log"
 	l2="${__logpath}/${1}.err.log"
@@ -37,14 +37,13 @@ function exec_and_log()
 # $1 should contain the minimum size of the log before bzip will be used
 function bzip_large_logs()
 {
-	[ -z "${__logpath}" ] && echo "ERROR!  Logging not initialised." && exit
+	[ -z "${__logpath}" ] && echo "ERROR! Logging not initialised." && exit
 	if ${__logszipped} ; then echo "ERROR! Logs already bzipped." ; exit ; fi
 
 	nlf=""
 	for lf in ${__logfiles}
 	do
 		fs=$(stat -c%s "${lf}")
-		echo $fs
 		[ ${fs} -ge $1 ] && bzip2 -9 ${lf} && nlf="${nlf} ${lf}.bz2"
 		[ ${fs} -lt $1 ] && nlf="${nlf} ${lf}"
 	done
@@ -52,26 +51,26 @@ function bzip_large_logs()
 	__logszipped=true
 }
 
+# Returns a list of log files in $1
+function get_log_files()
+{
+	[ -z "${__logpath}" ] && echo "ERROR! Logging not initialised." && exit
+
+	OFS="|"
+	eval "$1=\"${__logfiles}\""
+	unset OFS
+}
+
 # Removes all log files
 function clean_up_logs()
 {
-	[ -z "${__logpath}" ] && echo "ERROR!  Logging not initialised." && exit
+	[ -z "${__logpath}" ] && echo "ERROR! Logging not initialised." && exit
 
 	for lf in ${__logfiles}
 	do
 		rm ${lf}
 	done
 }
-
-# Returns a list of log files in $1
-function get_log_files()
-{
-	OFS="|"
-	eval "$1=\"${__logfiles}\""
-	unset OFS
-}
-
-
 
 #init_logging "./autobuild"
 
