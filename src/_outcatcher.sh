@@ -26,12 +26,15 @@ function exec_and_log()
 	l2="${__logpath}/${1}.err.log"
 
 	$( $2 1>> $l1 2>> $l2 )
+	rs=$?
 
 	[ ! -s ${l1} ] && rm ${l1} -f
 	[ ! -s ${l2} ] && rm ${l2} -f
 	
 	[ -e ${l1} ] && __logfiles="${__logfiles} ${l1}"
 	[ -e ${l2} ] && __logfiles="${__logfiles} ${l2}"
+	
+	return $rs
 }
 
 # Bzip log files greater then a specified size
