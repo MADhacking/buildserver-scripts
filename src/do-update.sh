@@ -84,7 +84,7 @@ else
 	echo "done."
 	
 	# Ensure all required distfiles have been accessed
-	echo -n "Rebuilding broken perl packages..."
+	echo -n "Touching all required distfiles..."
 	emerge -e --fetchonly world --with-bdeps y &> /dev/null
 	echo "done."
 	
@@ -117,4 +117,3 @@ if [ $tty -gt 0 ]; then
 else
   echo "Logs can be found at ${logfiles}"
 fi
-
