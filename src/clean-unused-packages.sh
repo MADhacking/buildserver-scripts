@@ -16,7 +16,7 @@ fi
 # Store current directory, repeatedly delete least recently accessed 10 files from 
 # packages directories until there is sufficient free space, restore current 
 # directory and fix package cache if we deleted anything. 
-echo -n "Cleaning unused packages..." 
+echo "Cleaning unused packages..." 
 pushd /mnt/portage/packages > /dev/null 
 touch /tmp/timestamp 1>/dev/null
 emerge -pveK world --with-bdeps y 2>&1 1>&1 | awk -F "] " '/\[binary.+\]/ { print $2 }' | awk '{print $1 ".tbz2"}' | xargs -n 128 touch -a -c
@@ -24,11 +24,7 @@ find -type f ! -anewer /tmp/timestamp
 #find -type f ! -anewer /tmp/timestamp -delete 1>/dev/null
 rm /tmp/timestamp 1>/dev/null
 popd > /dev/null 
-rm /mnt/portage/packages/Packages -f
-echo -ne "\n...done.\nFixing package cache..." 
-emaint --fix binhost 1>/dev/null 
-echo "done." 
-
+echo "...done"
 
 
 

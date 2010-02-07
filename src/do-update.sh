@@ -90,9 +90,15 @@ else
 	
 	# Remove unused binary packages
 	echo -n "Cleaning unused packages..." 
-	clean-unused-packages.sh
+	exec_and_log clean_unused "clean-unused-packages.sh"
 	echo "done."
-	
+
+	# Fix the package cache for the binhost
+	echo -n "Fixing package cache..." 
+	rm /mnt/portage/packages/Packages -f
+	emaint --fix binhost 1>/dev/null 
+	echo "done." 
+
 	echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
 fi
 
