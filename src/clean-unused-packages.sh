@@ -19,7 +19,7 @@ touch -a -c `emerge -pveK world --with-bdeps y | awk '/\[binary/ { print $4 ".tb
 find -type f ! -anewer /tmp/timestamp -delete 1>/dev/null
 rm /tmp/timestamp 1>/dev/null
 popd > /dev/null 
-rm /mnt/portage/packages/Packages
+rm /mnt/portage/packages/Packages -f
 echo -ne "done.\nFixing package cache..." 
 emaint --fix binhost 1>/dev/null 
 echo "done." 

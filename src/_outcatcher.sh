@@ -27,8 +27,8 @@ function exec_and_log()
 
 	$( $2 1>> $l1 2>> $l2 )
 
-	[ ! -s ${l1} ] && rm ${l1}
-	[ ! -s ${l2} ] && rm ${l2}
+	[ ! -s ${l1} ] && rm ${l1} -f
+	[ ! -s ${l2} ] && rm ${l2} -f
 	
 	[ -e ${l1} ] && __logfiles="${__logfiles} ${l1}"
 	[ -e ${l2} ] && __logfiles="${__logfiles} ${l2}"

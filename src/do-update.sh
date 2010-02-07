@@ -64,8 +64,8 @@ echo "done."
 
 # Rebuild broken binaries
 echo -n "Rebuilding broken binaries..."
-exec_and_log revdep_rebuild "revdep-rebuild -i -p"
-exec_and_log revdep_rebuild "revdep-rebuild"
+exec_and_log revdep_rebuild "revdep-rebuild -i -p -P"
+[ -e /var/cache/revdep-rebuild/3_broken.rr ] && exec_and_log revdep_rebuild "revdep-rebuild -P"
 echo "done."
 
 # Ensure any python packages broken by an update are rebuilt
