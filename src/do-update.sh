@@ -95,10 +95,10 @@ get_log_files logfiles
 if [ $tty -gt 0 ]; then
   mutt -s "Automated update of $BUILDSPACE_NAME" \
        -a ${logfiles} \
-       -- root < ~/update.out
+       -- root < ~/update.out.log
   exec 1>&1
   clean_up_logs
 else
-  echo "Logs can be found at ~/fetchlog.txt ~/buildlog.txt ~/depcleanlog.txt ~/revdeplog.txt"
+  echo "Logs can be found at ${logfiles}"
 fi
 
