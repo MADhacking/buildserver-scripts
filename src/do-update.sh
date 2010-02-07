@@ -79,7 +79,7 @@ exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
 echo "done."
 
 # Ensure all required distfiles have been accessed
-emerge -e --fetchonly world &> /dev/null
+emerge -e --fetchonly world --with-bdeps y &> /dev/null
 
 # Remove unused binary packages
 clean-unused-packages.sh
