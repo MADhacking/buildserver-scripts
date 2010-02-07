@@ -50,48 +50,51 @@ echo "done."
 # Build updated packages
 echo -n "Building updated packages..."
 exec_and_log build_phase "emerge -uDN world --keep-going"
-[ $? -gt 0 ] && echo "failed!" && exit
-echo "done."
-
-# Merge default configurations
-
-# Clean orphaned dependencies
-echo -n "Cleaning orphaned dependencies..."
-exec_and_log depclean "emerge --depclean"
-echo "done."
-
-# Fix broken .la files
-echo -n "Fixing broken .la files..."
-exec_and_log lafilefixer "lafilefixer --justfixit"
-echo "done."
-
-# Rebuild broken binaries
-echo -n "Rebuilding broken binaries..."
-exec_and_log revdep_rebuild "revdep-rebuild -i -p -P"
-[ -e /var/cache/revdep-rebuild/3_broken.rr ] && exec_and_log revdep_rebuild "revdep-rebuild -P"
-echo "done."
-
-# Ensure any python packages broken by an update are rebuilt
-echo -n "Rebuilding broken python packages..."
-exec_and_log python_updater "python-updater"
-echo "done."
-
-# Ensure any perl packages broken by an update are rebuilt
-echo -n "Rebuilding broken perl packages..."
-exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
-echo "done."
-
-# Ensure all required distfiles have been accessed
-echo -n "Rebuilding broken perl packages..."
-emerge -e --fetchonly world --with-bdeps y &> /dev/null
-echo "done."
-
-# Remove unused binary packages
-echo -n "Cleaning unused packages..." 
-clean-unused-packages.sh
-echo "done."
-
-echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
+if [ $? -gt 0 ]; then
+	echo "failed!"
+else
+	echo "done."
+	
+	# Merge default configurations
+	
+	# Clean orphaned dependencies
+	echo -n "Cleaning orphaned dependencies..."
+	exec_and_log depclean "emerge --depclean"
+	echo "done."
+	
+	# Fix broken .la files
+	echo -n "Fixing broken .la files..."
+	exec_and_log lafilefixer "lafilefixer --justfixit"
+	echo "done."
+	
+	# Rebuild broken binaries
+	echo -n "Rebuilding broken binaries..."
+	exec_and_log revdep_rebuild "revdep-rebuild -i -p -P"
+	[ -e /var/cache/revdep-rebuild/3_broken.rr ] && exec_and_log revdep_rebuild "revdep-rebuild -P"
+	echo "done."
+	
+	# Ensure any python packages broken by an update are rebuilt
+	echo -n "Rebuilding broken python packages..."
+	exec_and_log python_updater "python-updater"
+	echo "done."
+	
+	# Ensure any perl packages broken by an update are rebuilt
+	echo -n "Rebuilding broken perl packages..."
+	exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
+	echo "done."
+	
+	# Ensure all required distfiles have been accessed
+	echo -n "Rebuilding broken perl packages..."
+	emerge -e --fetchonly world --with-bdeps y &> /dev/null
+	echo "done."
+	
+	# Remove unused binary packages
+	echo -n "Cleaning unused packages..." 
+	clean-unused-packages.sh
+	echo "done."
+	
+	echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
+fi
 
 # Bzip any log files larger than 100k
 bzip_large_logs 102400
