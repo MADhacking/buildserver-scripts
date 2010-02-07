@@ -10,5 +10,5 @@ if [ -n "$BUILDSPACE_NAME" ]; then
 fi
 
 echo -n "Beginning synchronisation of the live portage tree..."
-rsync rsync.gentoo.org::gentoo-portage /mnt/repositories/live/portage --quiet --archive --no-D --delete-during
+rsync rsync.gentoo.org::gentoo-portage /mnt/repositories/live/portage --quiet --delete --archive --no-D --delete-during
 echo "...done."

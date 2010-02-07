@@ -10,7 +10,7 @@ if [ -n "$BUILDSPACE_NAME" ]; then
 fi
 
 echo -n "Synchronising the testing portage tree..." 
-rsync /mnt/repositories/live/portage/ /mnt/repositories/testing/portage/ --quiet --archive --no-D
+rsync /mnt/repositories/live/portage/ /mnt/repositories/testing/portage/ --quiet --delete --archive --no-D
 echo "...done." 
 
 chroot /mnt/buildspaces/x86-64bit-server /usr/local/sbin/update-portage-metadata 
