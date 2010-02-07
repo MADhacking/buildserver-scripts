@@ -9,13 +9,17 @@ if [ -z "$BUILDSPACE_NAME" ]; then
   exit
 fi
 
+# Remerge forgotten binaries!
+# emerge -pvek world --with-bdeps y 2>&1 1>&1 | grep ebuild | awk '{ print "="$4 }' | xargs emerge -1
+# emerge -pvek world --with-bdeps y 2>&1 1>&1 | awk '/\[ebuild/ { print "="$4 }' | xargs emerge -1
+
 # Store current directory, repeatedly delete least recently accessed 10 files from 
 # packages directories until there is sufficient free space, restore current 
 # directory and fix package cache if we deleted anything. 
 echo -n "Cleaning unused packages..." 
 pushd /mnt/portage/packages > /dev/null 
 touch /tmp/timestamp 1>/dev/null
-emerge -pveK world --with-bdeps y | awk '/\[binary/ { print $4 ".tbz2" }' | xargs -n 128 touch -a -c
+emerge -pveK world 2>&1 1>&1 | awk '/\[binary/ { print $4 ".tbz2" }' | xargs -n 128 touch -a -c
 #touch -a -c `emerge -pveK world --with-bdeps y | awk '/\[binary/ { print $4 ".tbz2" }'` 1>/dev/null
 find -type f ! -anewer /tmp/timestamp -delete 1>/dev/null
 rm /tmp/timestamp 1>/dev/null
@@ -24,3 +28,7 @@ rm /mnt/portage/packages/Packages -f
 echo -ne "done.\nFixing package cache..." 
 emaint --fix binhost 1>/dev/null 
 echo "done." 
+
+
+
+
