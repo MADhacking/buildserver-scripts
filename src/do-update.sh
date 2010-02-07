@@ -37,6 +37,11 @@ echo -n "Performing pretend update..."
 exec_and_log pretend_update "emerge -pvuDN world"
 echo "done."
 
+# Store any new news items for email attachment later
+echo -n "Checking for news..."
+exec_and_log news "eselect news read new"
+echo "done."
+
 # Fetch distfiles
 echo -n "Fetching required distfiles..."
 exec_and_log fetch_phase "emerge -uDN world --fetchonly"
@@ -45,12 +50,10 @@ echo "done."
 # Build updated packages
 echo -n "Building updated packages..."
 exec_and_log build_phase "emerge -uDN world --keep-going"
+[ $? -gt 0 ] && echo "failed!" && exit
 echo "done."
 
 # Merge default configurations
-
-# Store any new news items for email attachment later
-exec_and_log news "eselect news read new"
 
 # Clean orphaned dependencies
 echo -n "Cleaning orphaned dependencies..."
@@ -79,10 +82,14 @@ exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
 echo "done."
 
 # Ensure all required distfiles have been accessed
+echo -n "Rebuilding broken perl packages..."
 emerge -e --fetchonly world --with-bdeps y &> /dev/null
+echo "done."
 
 # Remove unused binary packages
+echo -n "Cleaning unused packages..." 
 clean-unused-packages.sh
+echo "done."
 
 echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
 
