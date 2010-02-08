@@ -14,7 +14,6 @@ emerge -pvek world --with-bdeps y 2>&1 1>&1 | \
 	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | \
 		awk '{print "=" $1}' | xargs | xargs -r -t emerge -1pv
 
-[ $? -eq 0 ] && \		
-	emerge -pvek world --with-bdeps y 2>&1 1>&1 | \
+[ $? -eq 0 ] && emerge -pvek world --with-bdeps y 2>&1 1>&1 | \
 	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | \
-		awk '{print "=" $1}' | xargs | xargs -r -t emerge -1pv		
+		awk '{print "=" $1}' | xargs | xargs -r -t emerge -1		
