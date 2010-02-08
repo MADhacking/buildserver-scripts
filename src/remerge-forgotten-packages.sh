@@ -11,5 +11,10 @@ fi
 
 # Remerge forgotten binaries!
 emerge -pvek world --with-bdeps y 2>&1 1>&1 | \
-	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | xargs | \
-		xargs -r -I {} emerge -1pv {} \; emerge -1 --keep-going {} \;
+	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | \
+		awk '{print "=" $1}' | xargs | xargs -r -t emerge -1pv
+
+[ $? -eq 0 ] && \		
+	emerge -pvek world --with-bdeps y 2>&1 1>&1 | \
+	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | \
+		awk '{print "=" $1}' | xargs | xargs -r -t emerge -1pv		
