@@ -67,6 +67,11 @@ else
 	exec_and_log lafilefixer "lafilefixer --justfixit"
 	echo "done."
 	
+	# Remove old libraries kept by preserve-libs
+	echo -n "Removing redundant libraries..."
+	exec_and_log delete_old_libs "delete-old-libs.sh"
+	echo "done." 
+	
 	# Rebuild broken binaries
 	echo -n "Rebuilding broken binaries..."
 	exec_and_log revdep_rebuild "revdep-rebuild -i -p -P"
