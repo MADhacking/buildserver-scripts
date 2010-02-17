@@ -11,6 +11,10 @@ fi
 
 echo "Synchronising testing tree to stable tree:"
 
+echo -n "  Synchronising configurations..."
+rsync /mnt/repositories/testing/conf/ /mnt/repositories/stable/conf/ --quiet --delete --archive --no-D
+echo "...done."
+
 echo -n "  Synchronising portage..."
 rsync /mnt/repositories/testing/portage/ /mnt/repositories/stable/portage/ --quiet --delete --archive --no-D
 echo "...done."
@@ -19,8 +23,8 @@ echo -n "  Synchronising packages..."
 rsync /mnt/repositories/testing/packages/ /mnt/repositories/stable/packages/ --quiet --delete --archive --no-D
 echo "...done."
 
-#echo -n "  Synchronising kernels..."
-#rsync /mnt/repositories/testing/kernels/ /mnt/repositories/stable/kernels/ --quiet --delete --archive --no-D
-#echo "...done."
+echo -n "  Synchronising kernels..."
+rsync /mnt/repositories/testing/kernels/ /mnt/repositories/stable/kernels/ --quiet --delete --archive --no-D
+echo "...done."
 
 echo "Synchronising of testing tree to stable tree complete."
