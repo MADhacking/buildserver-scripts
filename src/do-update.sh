@@ -27,7 +27,7 @@ echo "Starting automated update of $BUILDSPACE_NAME buildspace."
 # Get free space required for updates
 echo -n "Calculating required disk space..."
 reqSpace=`get-space-distfiles.sh`
-echo "done."
+echo "done ($reqSpace bytes)."
 
 # Ensure free space is available for distfiles
 free-distfiles-space.sh $reqSpace
