@@ -56,6 +56,10 @@ else
 	echo "done."
 	
 	# Merge default configurations
+	echo -n "Merging new default configurations..."
+	exec_and_log config_merge "merge-new-configs.sh"
+	echo "done."
+	
 	
 	# Clean orphaned dependencies
 	echo -n "Cleaning orphaned dependencies..."
