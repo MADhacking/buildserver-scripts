@@ -10,7 +10,7 @@ if [ -z "$BUILDSPACE_NAME" ]; then
 fi
 
 # This is the list of files to protect.
-files="make.conf resolv.conf "
+files="bashrc make.conf locale.gen resolv.conf ssmtp.conf"
 
 # Loop through the files above searching for any configuration files which
 # match.  If any are found for that file display them and delete them.
@@ -18,14 +18,15 @@ echo "Searching for new configurations for:"
 for f in $files; do
 	echo -n "    $f : "
 	ftd=$(find /etc -name "._cfg*$f*" | xargs)
-	if [ -n "$ftd" ]; then
+	if [ -z "$ftd" ]; then
 		echo "none."
 	else
 		echo $ftd
-		# rm -f $ftd
+		rm -f $ftd
 	fi
 done
+echo
 
 # Now that we have removed any configuration files we do not want we can
 # use etc-update to complete the job.
-echo -e "-1\n" | etc-update
+echo -e "-5\n" | etc-update
