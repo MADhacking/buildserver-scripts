@@ -17,7 +17,7 @@ files="bashrc make.conf locale.gen resolv.conf ssmtp.conf"
 echo "Searching for new configurations for:"
 for f in $files; do
 	echo -n "    $f : "
-	ftd=$(find /etc -name "._cfg*$f*" | xargs)
+	ftd=$(find /etc -name "._cfg*$f*" | xargs -r)
 	if [ -z "$ftd" ]; then
 		echo "none."
 	else
