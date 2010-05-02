@@ -60,7 +60,6 @@ else
 	exec_and_log config_merge "merge-new-configs.sh"
 	echo "done."
 	
-	
 	# Clean orphaned dependencies
 	echo -n "Cleaning orphaned dependencies..."
 	exec_and_log depclean "emerge --depclean"
@@ -118,11 +117,11 @@ bzip_large_logs 102400
 # end the redirect of 1&2 otherwise display summary message.
 get_log_files logfiles
 if [ $tty -gt 0 ]; then
-  mutt -s "Automated update of $BUILDSPACE_NAME" \
-       -a ${logfiles} \
-       -- root < ~/update.out.log
-  exec 1>&1
-  clean_up_logs
+	mutt -s "Automated update of $BUILDSPACE_NAME" \
+         -a ${logfiles} \
+         -- root < ~/update.out.log
+  	exec 1>&1
+  	clean_up_logs
 else
-  echo "Logs can be found at ${logfiles}"
+	echo "Logs can be found at ${logfiles}"
 fi

@@ -13,6 +13,8 @@ echo -n "Synchronising the testing portage tree..."
 rsync /mnt/repositories/live/portage/ /mnt/repositories/testing/portage/ --quiet --delete --archive --no-D
 echo "...done." 
 
+auto-patch-portage.sh
+
 chroot /mnt/buildspaces/x86-64bit-server /usr/local/sbin/update-portage-metadata.sh
 chroot /mnt/buildspaces/x86-64bit-workstation /usr/local/sbin/update-portage-metadata.sh
 
