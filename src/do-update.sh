@@ -83,7 +83,7 @@ else
 	
 	# Ensure any python packages broken by an update are rebuilt
 	echo -n "Rebuilding broken python packages..."
-	exec_and_log python_updater "python-updater -dCHECK manual"
+	exec_and_log python_updater "python-updater --disable-manual"
 	echo "done."
 	
 	# Ensure any perl packages broken by an update are rebuilt
