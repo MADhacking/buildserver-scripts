@@ -10,7 +10,7 @@ if [ -z "$BUILDSPACE_NAME" ]; then
 fi
 
 # This is the list of files to protect.
-files="bashrc make.conf locale.gen resolv.conf ssmtp.conf aliases"
+files="bashrc make.conf locale.gen resolv.conf ssmtp.conf aliases clock"
 
 # Loop through the files above searching for any configuration files which
 # match.  If any are found for that file display them and delete them.
