@@ -37,11 +37,6 @@ echo -n "Performing pretend update..."
 exec_and_log pretend_update "emerge -pvuDN world"
 echo "done."
 
-# Store any new news items for email attachment later
-echo -n "Checking for news..."
-exec_and_log news "eselect news read new"
-echo "done."
-
 # Fetch distfiles
 echo -n "Fetching required distfiles..."
 exec_and_log fetch_phase "emerge -uDN world --fetchonly"
@@ -55,6 +50,11 @@ if [ $? -gt 0 ]; then
 else
 	echo "done."
 	
+	# Store any new news items for email attachment later
+	echo -n "Checking for news..."
+	exec_and_log news "eselect news read new"
+	echo "done."
+
 	# Merge default configurations
 	echo -n "Merging new default configurations..."
 	exec_and_log config_merge "merge-new-configs.sh"
