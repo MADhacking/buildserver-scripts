@@ -15,7 +15,7 @@ fi
 echo "Cleaning unused packages..." 
 pushd /mnt/portage/packages > /dev/null 
 touch /tmp/timestamp 1>/dev/null
-emerge -pveK world --with-bdeps y 2>&1 1>&1 | awk -F "] " '/\[binary.+\]/ { print $2 }' | awk '{print $1 ".tbz2"}' | xargs -r -n 128 touch -a -c
+qlist -I -v | awk '{print $1 ".tbz2"}' | xargs -r -n 128 touch -a -c
 find -type f ! -anewer /tmp/timestamp
 find -type f ! -anewer /tmp/timestamp -delete 1>/dev/null
 rm /tmp/timestamp 1>/dev/null
