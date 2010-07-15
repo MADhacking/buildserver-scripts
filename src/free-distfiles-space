@@ -99,7 +99,7 @@ if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	(( ${REQSPACE} > 1024 )) && REQSPACE=$(( ${REQSPACE} / 1024 )) UNITS="GB"
 	
 	# Display result
-	[[ -n ${DISPLAYREQUIRED} ]] && echo -n "Free space required in DISTDIR (${DISTDIR}) : ${REQSPACE} ${UNITS} (${REQBYTES} bytes)"
+	[[ -n ${DISPLAYREQUIRED} ]] && echo "Free space required in DISTDIR (${DISTDIR}) : ${REQSPACE} ${UNITS} (${REQBYTES} bytes)"
 fi
 
 
