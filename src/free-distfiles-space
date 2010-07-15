@@ -7,10 +7,10 @@ function helpscreen
 	echo
 	echo "  -d, --free-delete              repeatedly delete the oldest files from DISTDIR"
 	echo "                                 until there is sufficient space to download"
-	echo "                                 those required for an update (implies -r)"
+	echo "                                 those required for an update"
 	echo "  -f, --display-free             display the current free space on the device"
 	echo "                                 used to store DISTDIR"
-	echo "  -r, --display-required         display the amount of free space requuired on"
+	echo "  -r, --display-required         display the amount of free space required on"
 	echo "                                 the device used to store DISTDIR to download"
 	echo "                                 those files required for an update"
 }

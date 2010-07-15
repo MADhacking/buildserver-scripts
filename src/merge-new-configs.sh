@@ -7,8 +7,6 @@ function helpscreen
 	echo
 	echo "  -f \"FILES\", --files \"FILES\"    use the file list specified in FILES"
 	echo "                                 instead of using configuration file"
-	echo "  -g FILE, --cfg-file FILE       use the configuration specified in FILE"
-	echo "                                 instead of the default location ${CFGFILE}"
 }
 
 # Init local vars
@@ -23,10 +21,6 @@ do
 	case $1 in
 		-f|--files)
 			FILES=$2
-			shift 2
-	    ;;
-		-g|--cfg-file)
-			CFGFILE=$2
 			shift 2
 	    ;;
 				
