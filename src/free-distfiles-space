@@ -5,11 +5,11 @@ function helpscreen
 	echo "Usage: free-distfiles-space [OPTION]..."
 #	echo ""
 	echo
-	echo "  -d, --display-free             display the current free space on the device"
-	echo "                                 used to store DISTDIR"
-	echo "  -f, --free-delete              repeatedly delete the oldest files from DISTDIR"
+	echo "  -d, --free-delete              repeatedly delete the oldest files from DISTDIR"
 	echo "                                 until there is sufficient space to download"
-	echo "                                 those required for an update (implies -g)"
+	echo "                                 those required for an update (implies -r)"
+	echo "  -f, --display-free             display the current free space on the device"
+	echo "                                 used to store DISTDIR"
 	echo "  -r, --display-required         display the amount of free space requuired on"
 	echo "                                 the device used to store DISTDIR to download"
 	echo "                                 those files required for an update"
@@ -19,13 +19,13 @@ function helpscreen
 while [ $# -gt 0 ]
 do
 	case $1 in
-	    -d|--display-free)
-			DISPLAYFREE=1
-			shift 1
-	    ;;
-		-f|--free-delete)
+		-d|--free-delete)
 			GETREQUIRED=1
 			FREEDELETE=1
+			shift 1
+	    ;;
+	    -f|--display-free)
+			DISPLAYFREE=1
 			shift 1
 	    ;;
 		-r|--display-required)
