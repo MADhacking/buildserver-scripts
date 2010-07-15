@@ -6,7 +6,7 @@ function helpscreen
 #	echo ""
 	echo
 	echo "  -f \"FILES\", --files \"FILES\"    use the file list specified in FILES"
-	echo "                                 instead of using configuration file"
+	echo "                                 instead of the configuration file"
 }
 
 # Init local vars
