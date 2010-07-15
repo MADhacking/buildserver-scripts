@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Update environment and source the profile
-env-update &>/dev/null
+env-update --no-ldconfig &>/dev/null
 source /etc/profile &>/dev/null
 
 # Include and initialise logging
@@ -11,7 +11,7 @@ init_logging "/var/log/autobuild"
 # Check to make sure we are being run from inside the buildspace.
 if [ -z "$BUILDSPACE_NAME" ]; then
   echo "ERROR: $0 should only be run from inside a buildspace!" >&2
-  exit
+  exit 1
 fi
 
 # Clean the portage and binary package temporary directory

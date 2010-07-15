@@ -4,7 +4,7 @@
 source /etc/profile &>/dev/null
 
 # Check to make sure we are being run from inside the buildspace.
-if [ -z "$BUILDSPACE_NAME" ]; then
+if [[ -z "$BUILDSPACE_NAME" ]]; then
   echo "ERROR: $0 should only be run from inside a buildspace!" >&2
   exit
 fi

@@ -1,0 +1,15 @@
+Modify everything to use q where available
+
+Check for version change of key packages before performing related update checks
+	qlist -I -S dev-lang/perl -v
+	portageq best_visible /mnt/portage/portage sys-devel/gcc
+	portageq pkgdir
+	portageq distdir
+	portageq portdir
+
+Kernel			modules-rebuild
+Linux headers	glibc rebuild
+Perl			perl-cleaner
+Python			python-updater
+GCC				gcc-config && emerge -e world
+
