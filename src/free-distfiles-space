@@ -79,24 +79,27 @@ if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	
 	# Get size and units
 	REQSIZE=${SPLIT2[0]//,/}
-	units=${SPLIT2[1]}
+	UNITS=${SPLIT2[1]}
 	
 	# Add 10%
 	REQSIZE=$(( ${REQSIZE} + ${REQSIZE} / 10 ))
 
-	[[ -n ${DISPLAYREQUIRED} ]] && echo -n "Free space required in DISTDIR (${DISTDIR}) : ${REQSIZE} ${units}"
-	
 	# Calculate in bytes
 	shopt -s nocasematch
-	case "$units" in
-		"kb") REQSIZE=$(( ${REQSIZE} * 1024 )) ;;
-		"mb") REQSIZE=$(( ${REQSIZE} * 1024 * 1024 )) ;;
-		"gb") REQSIZE=$(( ${REQSIZE} * 1024 * 1024 * 1024 )) ;;
+	case "$UNITS" in
+		"kb") REQBYTES=$(( ${REQSIZE} * 1024 )) ;;
+		"mb") REQBYTES=$(( ${REQSIZE} * 1024 * 1024 )) ;;
+		"gb") REQBYTES=$(( ${REQSIZE} * 1024 * 1024 * 1024 )) ;;
 	esac
 	shopt -u nocasematch
 	
+	# Recalculate in proper units
+	REQSPACE=$(( ${REQBYTES} / 1024 )) UNITS="KB"
+	(( ${REQSPACE} > 1024 )) && REQSPACE=$(( ${REQSPACE} / 1024 )) UNITS="MB"
+	(( ${REQSPACE} > 1024 )) && REQSPACE=$(( ${REQSPACE} / 1024 )) UNITS="GB"
+	
 	# Display result
-	[[ -n ${DISPLAYREQUIRED} ]] && echo " (${REQSIZE} bytes)"
+	[[ -n ${DISPLAYREQUIRED} ]] && echo -n "Free space required in DISTDIR (${DISTDIR}) : ${REQSPACE} ${UNITS} (${REQBYTES} bytes)"
 fi
 
 
