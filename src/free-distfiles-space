@@ -96,7 +96,7 @@ if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	shopt -u nocasematch
 	
 	# Display result
-	[[ -n ${DISPLAYREQUIRED} ]] && echo " (${REQSIZE}) bytes)"
+	[[ -n ${DISPLAYREQUIRED} ]] && echo " (${REQSIZE} bytes)"
 fi
 
 
@@ -107,10 +107,10 @@ if [[ -n ${FREEDELETE} ]]; then
 	pushd ${DISTDIR} > /dev/null 
 
 	# We may be done already, if so quit	
-	(( $(df . -P -B 1 2>/dev/null | tail -1 | awk '{print $4}') -ge ${REQSIZE} )) && exit
+	(( $(df . -P -B 1 2>/dev/null | tail -1 | awk '{print $4}') >= ${REQSIZE} )) && exit
 	
 	echo -n "Freeing space for distfiles..."
-	while (( $(df . -P -B 1 2>/dev/null | tail -1 | awk '{print $4}') -lt ${REQSIZE} ))
+	while (( $(df . -P -B 1 2>/dev/null | tail -1 | awk '{print $4}') < ${REQSIZE} ))
 	do 
 	  	rm `ls -1 --time=atime --sort=time --reverse | head --lines=20` 
 	  	echo -n "."
