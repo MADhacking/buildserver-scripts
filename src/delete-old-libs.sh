@@ -44,6 +44,7 @@ fi
 
 # Path to the build log.
 BLP="${LOGPATH}/build_phase.out.log"
+[[ ! -r ${BLP} ]] && echo "Error: Unable to read build phase log file at ${BLP}" && exit 3
 
 # Search the build log and display any libraries for which a revdep-rebuild is suggested.
 echo "Libraries needing revdep-rebuild:" 
