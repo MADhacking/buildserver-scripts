@@ -59,8 +59,8 @@ if [[ -n ${DISPLAYFREE} ]]; then
 	FREEBYTES=$(df -B 1 ${DISTDIR} 2>/dev/null | tail -1 | awk '{print $4}')
 	[[ $? ]] || ( echo "Unable to calculate free disk space in DISTDIR (${DISTDIR})" && exit 1 )
 	( FREESPACE=$(( ${FREEBYTES} / 1024 )) UNITS="KB" )
-	(( ${FREESPACE} > 1024 )) && ( FREESPACE=$(( ${FREESPACE} / 1024 )) UNITS="MB" )
-	(( ${FREESPACE} > 1024 )) && ( FREESPACE=$(( ${FREESPACE} / 1024 )) UNITS="GB" )
+	(( ${FREESPACE} -gt 1024 )) && ( FREESPACE=$(( ${FREESPACE} / 1024 )) UNITS="MB" )
+	(( ${FREESPACE} -gt 1024 )) && ( FREESPACE=$(( ${FREESPACE} / 1024 )) UNITS="GB" )
 	echo "Free space available in DISTDIR (${DISTDIR}) : ${FREESPACE} ${UNITS} (${FREEBYTES} bytes)"
 fi
 
