@@ -42,6 +42,9 @@ do
 	esac
 done
 
+# Source the profile (we're probably being run in a chroot and this may not have been done)
+source /etc/profile &>/dev/null
+
 # Check to make sure we are being run from inside the buildspace.
 if [ -z "$BUILDSPACE_NAME" ]; then
   echo "ERROR: $0 should only be run from inside a buildspace!" >&2
