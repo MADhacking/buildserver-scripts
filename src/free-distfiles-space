@@ -58,14 +58,14 @@ DISTDIR=$(portageq distdir)
 if [[ -n ${DISPLAYFREE} ]]; then
 	FREESPACE=$(df -h ${DISTDIR} 2>/dev/null | tail -1 | awk '{print $4}')
 	[[ $? ]] || ( echo "Unable to calculate free disk space in DISTDIR (${DISTDIR})" && exit 1 ) 
-	echo "Free space in DISTDIR (${DISTDIR}) : ${FREESPACE}b"
+	echo "Free space available in DISTDIR (${DISTDIR}) : ${FREESPACE}B"
 fi
 
 
 # If we have been asked to display required free space then...
 if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	# Get size of downloads for this update
-	# sizeStr="Total: 3 packages (3 upgrades), Size of downloads: 1,497 kB"
+	# Eg: sizeStr="Total: 3 packages (3 upgrades), Size of downloads: 1,497 kB"
 	sizeStr=$(emerge -pvuDN world | grep "Size of downloads:")
 	
 	# Split result string
@@ -87,7 +87,7 @@ if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	# Add 10%
 	reqSize=$(( $reqSize + ${reqSize:0:$(( ${#reqSize} - 1 ))} ))
 
-	[[ -n ${DISPLAYREQUIRED} ]] && echo -n "Free space required in DISTDIR : ${reqSize} ${units}"
+	[[ -n ${DISPLAYREQUIRED} ]] && echo -n "Free space required in DISTDIR (${DISTDIR}) : ${reqSize} ${units}"
 	
 	# Calculate in bytes
 	shopt -s nocasematch
@@ -99,7 +99,7 @@ if [[ -n ${GETREQUIRED} || -n ${DISPLAYREQUIRED} ]]; then
 	shopt -u nocasematch
 	
 	# Display result
-	[[ -n ${DISPLAYREQUIRED} ]] && echo "($(( 0 + reqSize )) bytes)"
+	[[ -n ${DISPLAYREQUIRED} ]] && echo " ($(( 0 + reqSize )) bytes)"
 fi
 
 
