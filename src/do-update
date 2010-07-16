@@ -16,7 +16,7 @@ fi
 
 # Clean the portage and binary package temporary directory
 PTD=$(portageq envvar PORTAGE_TMPDIR)
-[[ -z ${PTD} || (( $? )) ]] && echo "ERROR: Unable to locate PORTAGE_TMPDIR" >&2 && exit 2
+[[ -z ${PTD} || (( ! $? )) ]] && echo "ERROR: Unable to locate PORTAGE_TMPDIR" >&2 && exit 2
 rm -rf ${PTD}/portage/* ${PTD}/binpkgs/*
 (( $? )) && echo "ERROR: Unable to clean ${PTD}/portage" >&2 && exit 3
 rm -rf ${PTD}/binpkgs/*
