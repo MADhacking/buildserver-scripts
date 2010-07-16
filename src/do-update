@@ -80,9 +80,11 @@ else
 	echo -n "Rebuilding broken binaries (pretend)..."
 	exec_and_log revdep_rebuild_p1 "revdep-rebuild -i -p -P"
 	(( ! $? )) && echo "done." || echo "failed."
-	echo -n "Rebuilding broken binaries..."
-	[[ -e /var/cache/revdep-rebuild/3_broken.rr ]] && exec_and_log revdep_rebuild_p2 "revdep-rebuild -P"
-	(( ! $? )) && echo "done." || echo "failed."
+	if [[ -e /var/cache/revdep-rebuild/3_broken.rr ]]; then
+		echo -n "Rebuilding broken binaries..."
+		exec_and_log revdep_rebuild_p2 "revdep-rebuild -P"
+		(( ! $? )) && echo "done." || echo "failed."
+	fi
 	
 	# Ensure any python packages broken by an update are rebuilt
 	echo -n "Rebuilding broken python packages..."
