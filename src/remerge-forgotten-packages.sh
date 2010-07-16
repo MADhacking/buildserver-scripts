@@ -52,4 +52,4 @@ emerge -pvek world ${DEPS} 2>&1 1>&1 | \
 
 [[ $? -eq 0 && -z ${PRETEND} ]] && emerge -pvek world ${DEPS} 2>&1 1>&1 | \
 	awk -F "] " '/\[ebuild.+\]/ { print $2 }' | \
-		awk '{print "=" $1}' | xargs | xargs -r emerge -1		
+		awk '{print "=" $1}' | xargs | xargs -r emerge -1 --keep-going		
