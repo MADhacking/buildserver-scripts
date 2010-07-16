@@ -2,7 +2,8 @@
 
 function helpscreen
 {
-	echo "Usage: ${0} [OPTION]..."
+	NAME=$(basename ${0})
+	echo "Usage: ${NAME} [OPTION]..."
 	echo "Automatically deletes updated configuration files for those files listed"
 	echo "then unconditionally merges remaining configuration files"
 	echo

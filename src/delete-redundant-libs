@@ -2,7 +2,8 @@
 
 function helpscreen
 {
-	echo "Usage: ${0} [OPTION]..."
+	NAME=$(basename ${0})
+	echo "Usage: ${NAME} [OPTION]..."
 	echo "Runs revdep-rebuild --library for libraries requiring it and deletes any"
 	echo "libraries which are no longer required once the rebuild is complete"
 	echo

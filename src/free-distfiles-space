@@ -2,8 +2,9 @@
 
 function helpscreen
 {
-	echo "Usage: free-distfiles-space [OPTION]..."
-#	echo ""
+	NAME=$(basename ${0})
+	echo "Usage: ${NAME} [OPTION]..."
+	echo "Manages the free space in the DISTDIR"
 	echo
 	echo "  -d, --free-delete              repeatedly delete the oldest files from DISTDIR"
 	echo "                                 until there is sufficient space to download"
@@ -16,7 +17,7 @@ function helpscreen
 }
 
 # Process command line switches
-while [ $# -gt 0 ]
+while [[ $# -gt 0 ]]
 do
 	case $1 in
 		-d|--free-delete)

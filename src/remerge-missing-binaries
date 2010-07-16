@@ -2,7 +2,8 @@
 
 function helpscreen
 {
-	echo "Usage: ${0} [OPTION]..."
+	NAME=$(basename ${0})
+	echo "Usage: ${NAME} [OPTION]..."
 	echo "Reinstalls any packages which are installed but which do not have a"
 	echo "corresponding binary package available"
 	echo
@@ -16,7 +17,7 @@ function helpscreen
 DEPS="--with-bdeps n"
 
 # Process command line switches
-while [ $# -gt 0 ]
+while [[ $# -gt 0 ]]
 do
 	case $1 in
 	    -b|--include-bdeps)
