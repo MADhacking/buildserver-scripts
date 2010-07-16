@@ -77,8 +77,10 @@ else
 	add_aux_logs delete_redundant_libs
 	
 	# Rebuild broken binaries
-	echo -n "Rebuilding broken binaries..."
+	echo -n "Rebuilding broken binaries (pretend)..."
 	exec_and_log revdep_rebuild_p1 "revdep-rebuild -i -p -P"
+	(( ! $? )) && echo "done." || echo "failed."
+	echo -n "Rebuilding broken binaries..."
 	[[ -e /var/cache/revdep-rebuild/3_broken.rr ]] && exec_and_log revdep_rebuild_p2 "revdep-rebuild -P"
 	(( ! $? )) && echo "done." || echo "failed."
 	
@@ -90,7 +92,7 @@ else
 	# Ensure any perl packages broken by an update are rebuilt
 	echo -n "Rebuilding broken perl packages..."
 	exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
-	(( ! $? )) && echo "done." || echo "failed."
+	(( $? < 2 )) && echo "done." || echo "failed."
 	
 	# Ensure all required distfiles have been accessed
 	echo -n "Touching all required distfiles..."
@@ -124,5 +126,9 @@ if [[ $tty -gt 0 ]]; then
   	exec 1>&1
 	(( ! $? )) && clean_up_logs
 else
-	echo "Logs can be found at ${logfiles}"
+	echo "Logs can be found at:"
+	for lf in ${logfiles}
+	do
+		echo "    ${lf}"
+	done
 fi
