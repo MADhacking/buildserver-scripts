@@ -3,7 +3,8 @@
 function helpscreen
 {
 	echo "Usage: merge-new-configs [OPTION]..."
-#	echo ""
+	echo "Automatically deletes updated configuration files for those files listed"
+	echo "then unconditionally merges remaining configuration files"
 	echo
 	echo "  -f \"FILES\", --files \"FILES\"    use the file list specified in FILES"
 	echo "                                 instead of the configuration file"
@@ -16,7 +17,7 @@ CFGFILE=/etc/merge-new-configs
 [[ -r ${CFGFILE} ]] && source ${CFGFILE}
 
 # Process command line switches
-while [ $# -gt 0 ]
+while [[ $# -gt 0 ]]
 do
 	case $1 in
 		-f|--files)
@@ -36,7 +37,7 @@ done
 source /etc/profile &>/dev/null
 
 # Check to make sure we are being run from inside the buildspace.
-if [ -z "$BUILDSPACE_NAME" ]; then
+if [[ -z "$BUILDSPACE_NAME" ]]; then
 	echo "ERROR: $0 should only be run from inside a buildspace!" >&2
 	exit 1
 fi
@@ -57,7 +58,7 @@ echo "Searching for new configurations for:"
 for F in ${FILES}; do
 	echo -n "    ${F} : "
 	FTD=$(find /etc -name "._cfg*${F}*" | xargs -r)
-	if [ -z ${FTD} ]; then
+	if [[ -z ${FTD} ]]; then
 		echo "none."
 	else
 		echo ${FTD}
