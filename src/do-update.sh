@@ -57,7 +57,7 @@ else
 
 	# Merge default configurations
 	echo -n "Merging new default configurations..."
-	exec_and_log config_merge "merge-new-configs.sh"
+	exec_and_log config_merge "merge-new-configs"
 	(( ! $? )) && echo "done." || echo "failed."
 	
 	# Clean orphaned dependencies
@@ -72,9 +72,9 @@ else
 	
 	# Remove old libraries kept by preserve-libs
 	echo -n "Removing redundant libraries..."
-	exec_and_log delete_old_libs "delete-old-libs.sh"
+	exec_and_log delete_redundant_libs "delete-redundant-libs"
 	(( ! $? )) && echo "done." || echo "failed."
-	add_aux_logs delete_old_libs
+	add_aux_logs delete_redundant_libs
 	
 	# Rebuild broken binaries
 	echo -n "Rebuilding broken binaries..."
