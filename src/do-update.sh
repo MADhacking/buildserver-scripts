@@ -16,11 +16,11 @@ fi
 
 # Clean the portage and binary package temporary directory
 PTD=$(portageq envvar PORTAGE_TMPDIR)
-[[ -z ${PTD} || ! $? ]] && echo "ERROR: Unable to locate PORTAGE_TMPDIR" >&2 && exit 2
+[[ -z ${PTD} || (( $? )) ]] && echo "ERROR: Unable to locate PORTAGE_TMPDIR" >&2 && exit 2
 rm -rf ${PTD}/portage/* ${PTD}/binpkgs/*
-[[ ! $? ]] && echo "ERROR: Unable to clean ${PTD}/portage" >&2 && exit 3
+(( $? )) && echo "ERROR: Unable to clean ${PTD}/portage" >&2 && exit 3
 rm -rf ${PTD}/binpkgs/*
-[[ ! $? ]] && echo "ERROR: Unable to clean ${PTD}/binpkgs" >&2 && exit 3
+(( $? )) && echo "ERROR: Unable to clean ${PTD}/binpkgs" >&2 && exit 3
 
 # If we are not being run from a TTY then redirect output to ~/update.out
 tty -s
@@ -74,6 +74,7 @@ else
 	echo -n "Removing redundant libraries..."
 	exec_and_log delete_old_libs "delete-old-libs.sh"
 	(( ! $? )) && echo "done." || echo "failed."
+	add_aux_logs delete_old_libs
 	
 	# Rebuild broken binaries
 	echo -n "Rebuilding broken binaries..."
@@ -98,7 +99,7 @@ else
 	
 	# Remove unused binary packages
 	echo -n "Cleaning unused packages..." 
-	exec_and_log clean_unused "clean-unused-packages.sh"
+	exec_and_log clean_unused "qpkg --clean"
 	(( ! $? )) && echo "done." || echo "failed."
 
 	# Fix the package cache for the binhost
