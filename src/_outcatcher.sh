@@ -16,7 +16,7 @@ function init_logging()
 }
 
 # Execute a command and log stdout and stderr to files
-# $1 should contain the file name
+# $1 should contain the base file name
 # $2 should contain the command to execute
 # If the log files are zero size they are deleted, any remaining log files are
 # added to __logfiles list.
@@ -39,6 +39,20 @@ function exec_and_log()
 	return $rs
 }
 
+# Add auxilery log files to the list
+# $1 should contain the base file name
+function add_aux_logs()
+{
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 1
+	
+	logs=${__logpath}/${1}.*.aux.*.log
+	for l in ${logs}
+	do
+		[[ ! -s ${l} ]] && rm ${l} -f
+		[[ -e ${l} ]] && __logfiles="${__logfiles} ${l}"
+	done
+}
+
 # Bzip log files greater then a specified size
 # $1 should contain the minimum size of the log before bzip will be used
 function bzip_large_logs()
@@ -50,8 +64,8 @@ function bzip_large_logs()
 	for lf in ${__logfiles}
 	do
 		fs=$(stat -c%s "${lf}")
-		[[ ${fs} -ge $1 ]] && bzip2 -9 ${lf} && nlf="${nlf} ${lf}.bz2"
-		[[ ${fs} -lt $1 ]] && nlf="${nlf} ${lf}"
+		(( ${fs} > ${1} )) && bzip2 -9 ${lf} && nlf="${nlf} ${lf}.bz2"
+		(( ${fs} <= ${1} )) && nlf="${nlf} ${lf}"
 	done
 	__logfiles="${nlf}"
 	__logszipped=true
