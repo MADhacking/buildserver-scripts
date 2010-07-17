@@ -65,25 +65,32 @@ else
 	exec_and_log depclean "emerge --depclean"
 	(( ! $? )) && echo "done." || echo "failed."
 	
-	# Fix broken .la files
-	echo -n "Fixing broken .la files..."
-	exec_and_log lafilefixer "lafilefixer --justfixit"
-	(( ! $? )) && echo "done." || echo "failed."
-	
 	# Remove old libraries kept by preserve-libs
 	echo -n "Removing redundant libraries..."
 	exec_and_log delete_redundant_libs "delete-redundant-libs"
 	(( ! $? )) && echo "done." || echo "failed."
 	add_aux_logs delete_redundant_libs
 	
+	# Fix broken .la files
+	echo -n "Fixing broken .la files..."
+	exec_and_log lafilefixer "lafilefixer --justfixit"
+	(( ! $? )) && echo "done." || echo "failed."
+	
 	# Rebuild broken binaries
 	echo -n "Rebuilding broken binaries (pretend)..."
-	exec_and_log revdep_rebuild_p1 "revdep-rebuild -i -p -P"
+	exec_and_log revdep_rebuild_p0 "revdep-rebuild -i -p -P"
 	(( ! $? )) && echo "done." || echo "failed."
 	if [[ -e /var/cache/revdep-rebuild/3_broken.rr ]]; then
-		echo -n "Rebuilding broken binaries..."
-		exec_and_log revdep_rebuild_p2 "revdep-rebuild -P -- --keep-going"
-		(( ! $? )) && echo "done." || echo "failed."
+		echo -n "Rebuilding broken binaries (pass 1)..."
+		exec_and_log revdep_rebuild_p1 "revdep-rebuild -P -- --keep-going"
+		if (( ! $? )); then
+			echo "done."
+		else
+			echo "failed."
+			echo -n "Rebuilding broken binaries (pass 2)..."
+			exec_and_log revdep_rebuild_p2 "revdep-rebuild -P -- --keep-going"
+			(( ! $? )) && echo "done." || echo "failed."
+		fi
 	fi
 	
 	# Ensure any python packages broken by an update are rebuilt
