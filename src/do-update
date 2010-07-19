@@ -159,7 +159,7 @@ else
 	[[ ${POST_PERL_PKG} != ${PRE_PERL_PKG} ]] && \
 		PERLCARGS="modules libperl ph-clean"
 	[[ ${POST_HEADERS_PKG} != ${PRE_HEADERS_PKG} ]] && \
-		PERLCARGS="${} phupdate"
+		PERLCARGS="${PERLCARGS} phupdate"
 
 	# Ensure any perl packages broken by an update are rebuilt if needed
 	if [[ -n ${PERLCARGS} ]]; then
@@ -189,7 +189,7 @@ else
 	exec_and_log news "eselect news read new"
 	(( ! $? )) && echo "done." || echo "failed."
 
-	echo -e "\nAutomated update of $BUILDSPACE_NAME buildspace completed.\n"
+	echo -e "\nAutomated update of [$BUILDSPACE_NAME] buildspace completed.\n"
 fi
 
 # Bzip any log files larger than 100k
