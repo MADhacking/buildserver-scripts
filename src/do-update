@@ -79,11 +79,31 @@ else
 	exec_and_log build_phase "emerge -uDN world --keep-going"
 	(( ! $? )) && echo "done." || echo "failed."
 	
-	# Store any new news items for email attachment later
-	echo -n "Checking for news..."
-	exec_and_log news "eselect news read new"
-	(( ! $? )) && echo "done." || echo "failed."
+	# Store and display current key package versions and slots.
+	POST_PERL_PKG=$(qlist -I -C -v -e dev-lang/perl)
+	POST_PYTHON_PKGS=$(qlist -I -C -v -e dev-lang/python | xargs)
+	POST_PYTHON_SLOT=$(qlist -I -C -S -e dev-lang/python | cut -f 2 -d " " | xargs)
+	POST_PORTAGE_PKG=$(qlist -I -C -v -e sys-apps/portage)
+	POST_GCC_PKGS=$(qlist -I -C -v -e sys-devel/gcc | xargs)
+	POST_GCC_SLOT=$(qlist -I -C -S -e sys-devel/gcc | cut -f 2 -d " " | xargs)
+	POST_HEADERS_PKG=$(qlist -I -C -v -e sys-kernel/linux-headers)
+	POST_GLIBC_PKG=$(qlist -I -C -v -e sys-libs/glibc)
 
+	echo -e "\nKey package versions [post update]"
+	echo "    ${POST_PERL_PKG}"
+	echo "    ${POST_PYTHON_PKGS} in slot(s) ${POST_PYTHON_SLOT}"
+	echo "    ${POST_PORTAGE_PKG}"
+	echo "    ${POST_GCC_PKGS} in slot(s) ${POST_GCC_SLOT}"
+	echo "    ${POST_HEADERS_PKG}"
+	echo -e "    ${POST_GLIBC_PKG}\n"
+	
+	# If the kernel headers got an update and glibc didn't then rebuild it
+	if [[ ${PRE_HEADERS_PKG} != ${POST_HEADERS_PKG} && ${PRE_GLIBC_PKG} == ${POST_GLIBC_PKG} ]]; then
+		echo -n "Rebuilding sys-libs/glibc against ${POST_HEADERS_PKG}..."
+		exec_and_log glibc_rebuild "emerge -1 sys-libs/glibc"
+		(( ! $? )) && echo "done." || echo "failed."
+	fi
+	
 	# Merge default configurations
 	echo -n "Merging new default configurations..."
 	exec_and_log config_merge "merge-new-configs"
@@ -121,24 +141,6 @@ else
 			(( ! $? )) && echo "done." || echo "failed."
 		fi
 	fi
-	
-	# Store and display current key package versions and slots.
-	POST_PERL_PKG=$(qlist -I -C -v -e dev-lang/perl)
-	POST_PYTHON_PKGS=$(qlist -I -C -v -e dev-lang/python | xargs)
-	POST_PYTHON_SLOT=$(qlist -I -C -S -e dev-lang/python | cut -f 2 -d " " | xargs)
-	POST_PORTAGE_PKG=$(qlist -I -C -v -e sys-apps/portage)
-	POST_GCC_PKGS=$(qlist -I -C -v -e sys-devel/gcc | xargs)
-	POST_GCC_SLOT=$(qlist -I -C -S -e sys-devel/gcc | cut -f 2 -d " " | xargs)
-	POST_HEADERS_PKG=$(qlist -I -C -v -e sys-kernel/linux-headers)
-	POST_GLIBC_PKG=$(qlist -I -C -v -e sys-libs/glibc)
-
-	echo -e "\nKey package versions [post update]"
-	echo "    ${POST_PERL_PKG}"
-	echo "    ${POST_PYTHON_PKGS} in slot(s) ${POST_PYTHON_SLOT}"
-	echo "    ${POST_PORTAGE_PKG}"
-	echo "    ${POST_GCC_PKGS} in slot(s) ${POST_GCC_SLOT}"
-	echo "    ${POST_HEADERS_PKG}"
-	echo -e "    ${POST_GLIBC_PKG}\n"
 	
 	# Create python-updater arguement list based on python upgrade type (minor or major)
 	[[ ${POST_PYTHON_PKGS} != ${PRE_PYTHON_PKGS} ]] && \
@@ -180,6 +182,11 @@ else
 	echo -n "Fixing package cache..." 
 	rm /mnt/portage/packages/Packages -f
 	emaint --fix binhost 1>/dev/null 
+	(( ! $? )) && echo "done." || echo "failed."
+
+	# Store any new news items for email attachment later
+	echo -n "Checking for news..."
+	exec_and_log news "eselect news read new"
 	(( ! $? )) && echo "done." || echo "failed."
 
 	echo -e "\nAutomated update of $BUILDSPACE_NAME buildspace completed.\n"
