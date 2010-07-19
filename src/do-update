@@ -151,7 +151,7 @@ else
 		echo -n "Rebuilding broken python packages..."
 		exec_and_log python_updater "python-updater ${PYUPDARGS}"
 		(( ! $? )) && echo "done." || echo "failed."
-	done
+	fi
 	
 	# Create perl-cleaner arguement list
 	[[ ${POST_PERL_PKG} != ${PRE_PERL_PKG} ]] && \
