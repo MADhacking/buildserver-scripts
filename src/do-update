@@ -4,20 +4,24 @@
 env-update --no-ldconfig &>/dev/null
 source /etc/profile &>/dev/null
 
+# Init local vars
+CFGFILE=/etc/buildserver
+
+# If the config file exists and we can read it do so
+[[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
+source ${CFGFILE}
+
 # Include and initialise logging
 source _outcatcher.sh
-init_logging "/var/log/autobuild"
+init_logging ${LOGPATH}
 
 # Check to make sure we are being run from inside the buildspace.
-if [[ -z "$BUILDSPACE_NAME" ]]; then
-  echo "ERROR: $0 should only be run from inside a buildspace!" >&2
-  exit 1
-fi
+[[ -z "$BUILDSPACE_NAME" ]] && echo "ERROR: $0 should only be run from inside a buildspace!" >&2 && exit 1
 
-# Clean the portage and binary package temporary directory
+# Clean the portage and binary package temporary directories
 PTD=$(portageq envvar PORTAGE_TMPDIR)
 [[ -z ${PTD} || (( ! $? )) ]] && echo "ERROR: Unable to locate PORTAGE_TMPDIR" >&2 && exit 2
-rm -rf ${PTD}/portage/* ${PTD}/binpkgs/*
+rm -rf ${PTD}/portage/*
 (( $? )) && echo "ERROR: Unable to clean ${PTD}/portage" >&2 && exit 3
 rm -rf ${PTD}/binpkgs/*
 (( $? )) && echo "ERROR: Unable to clean ${PTD}/binpkgs" >&2 && exit 3
@@ -27,7 +31,7 @@ tty -s
 tty=$?
 [[ $tty -gt 0 ]] && exec 1> ~/update.out.log
 
-echo "Starting automated update of $BUILDSPACE_NAME buildspace."
+echo -e "Starting automated update of [$BUILDSPACE_NAME] buildspace.\n"
 
 # Ensure free space is available for distfiles
 free-distfiles-space --free-delete
@@ -43,8 +47,33 @@ exec_and_log fetch_phase "emerge -uDN world --fetchonly"
 if [[ $? -gt 0 ]]; then
 	echo "failed!"
 else
-	echo "done."
+	echo -e "done.\n"
 
+	# Store and display current key package versions and slots.
+	PRE_PERL_PKG=$(qlist -I -C -v -e dev-lang/perl)
+	PRE_PYTHON_PKGS=$(qlist -I -C -v -e dev-lang/python | xargs)
+	PRE_PYTHON_SLOT=$(qlist -I -C -S -e dev-lang/python | cut -f 2 -d " " | xargs)
+	PRE_PORTAGE_PKG=$(qlist -I -C -v -e sys-apps/portage)
+	PRE_GCC_PKGS=$(qlist -I -C -v -e sys-devel/gcc | xargs)
+	PRE_GCC_SLOT=$(qlist -I -C -S -e sys-devel/gcc | cut -f 2 -d " " | xargs)
+	PRE_HEADERS_PKG=$(qlist -I -C -v -e sys-kernel/linux-headers)
+	PRE_GLIBC_PKG=$(qlist -I -C -v -e sys-libs/glibc)
+	
+	[[ -z ${PRE_PERL_PKG} ]] && echo "Error: Unable to retrieve current dev-lang/perl version" && exit 4
+	[[ -z ${PRE_PYTHON_PKGS} || -z ${PRE_PYTHON_SLOT} ]] && echo "Error: Unable to retrieve current dev-lang/python version" && exit 4
+	[[ -z ${PRE_PORTAGE_PKG} ]] && echo "Error: Unable to retrieve current sys-apps/portage version" && exit 4
+	[[ -z ${PRE_GCC_PKGS} || -z ${PRE_GCC_SLOT} ]] && echo "Error: Unable to retrieve current sys-devel/gcc version" && exit 4
+	[[ -z ${PRE_HEADERS_PKG} ]] && echo "Error: Unable to retrieve current sys-kernel/linux-headers version" && exit 4
+	[[ -z ${PRE_GLIBC_PKG} ]] && echo "Error: Unable to retrieve current sys-libs/glibc version" && exit 4
+	
+	echo "Key package versions [pre update]"
+	echo "    ${PRE_PERLPKG}"
+	echo "    ${PRE_PYTHON_PKGS} in slot(s) ${PRE_PYTHON_SLOT}"
+	echo "    ${PRE_PORTAGE_PKG}"
+	echo "    ${PRE_GCC_PKGS} in slot(s) ${PRE_GCC_SLOT}"
+	echo "    ${PRE_HEADERS_PKG}"
+	echo -e "    ${PRE_GLIBC_PKG}\n"
+			
 	# Build updated packages
 	echo -n "Building updated packages..."
 	exec_and_log build_phase "emerge -uDN world --keep-going"
@@ -93,15 +122,49 @@ else
 		fi
 	fi
 	
-	# Ensure any python packages broken by an update are rebuilt
-	echo -n "Rebuilding broken python packages..."
-	exec_and_log python_updater "python-updater --disable-manual"
-	(( ! $? )) && echo "done." || echo "failed."
+	# Store and display current key package versions and slots.
+	POST_PERL_PKG=$(qlist -I -C -v -e dev-lang/perl)
+	POST_PYTHON_PKGS=$(qlist -I -C -v -e dev-lang/python | xargs)
+	POST_PYTHON_SLOT=$(qlist -I -C -S -e dev-lang/python | cut -f 2 -d " " | xargs)
+	POST_PORTAGE_PKG=$(qlist -I -C -v -e sys-apps/portage)
+	POST_GCC_PKGS=$(qlist -I -C -v -e sys-devel/gcc | xargs)
+	POST_GCC_SLOT=$(qlist -I -C -S -e sys-devel/gcc | cut -f 2 -d " " | xargs)
+	POST_HEADERS_PKG=$(qlist -I -C -v -e sys-kernel/linux-headers)
+	POST_GLIBC_PKG=$(qlist -I -C -v -e sys-libs/glibc)
+
+	echo -e "\nKey package versions [post update]"
+	echo "    ${POST_PERLPKG}"
+	echo "    ${POST_PYTHON_PKGS} in slot(s) ${POST_PYTHON_SLOT}"
+	echo "    ${POST_PORTAGE_PKG}"
+	echo "    ${POST_GCC_PKGS} in slot(s) ${POST_GCC_SLOT}"
+	echo "    ${POST_HEADERS_PKG}"
+	echo -e "    ${POST_GLIBC_PKG}\n"
 	
-	# Ensure any perl packages broken by an update are rebuilt
-	echo -n "Rebuilding broken perl packages..."
-	exec_and_log perl_cleaner "perl-cleaner ph-clean modules"
-	(( $? < 2 )) && echo "done." || echo "failed."
+	# Create python-updater arguement list based on python upgrade type (minor or major)
+	[[ ${POST_PYTHON_PKGS} != ${PRE_PYTHON_PKGS} ]] && \
+		PYUPDARGS="--enable-static_linking --enable-shared_linking --enable-manual --enable-need_rebuild"
+	[[ ${POST_PYTHON_SLOT} != ${PRE_PYTHON_SLOT} ]] && \
+		PYUPDARGS="${PYUPDARGS} --enable-pylibdir --enable-PYTHON_ABIS"
+
+	# Ensure any python packages broken by an update are rebuilt if needed
+	if [[ -n ${PYUPDARGS} ]]; then
+		echo -n "Rebuilding broken python packages..."
+		exec_and_log python_updater "python-updater ${PYUPDARGS}"
+		(( ! $? )) && echo "done." || echo "failed."
+	done
+	
+	# Create perl-cleaner arguement list
+	[[ ${POST_PERL_PKG} != ${PRE_PERL_PKG} ]] && \
+		PERLCARGS="modules libperl ph-clean"
+	[[ ${POST_HEADERS_PKG} != ${PRE_HEADERS_PKG} ]] && \
+		PERLCARGS="${} phupdate"
+
+	# Ensure any perl packages broken by an update are rebuilt if needed
+	if [[ -n ${PERLCARGS} ]]; then
+		echo -n "Rebuilding broken perl packages..."
+		exec_and_log perl_cleaner "perl-cleaner ${PERLCARGS}"
+		(( $? < 2 )) && echo "done." || echo "failed."
+	fi
 	
 	# Ensure all required distfiles have been accessed
 	echo -n "Touching all required distfiles..."
@@ -119,7 +182,7 @@ else
 	emaint --fix binhost 1>/dev/null 
 	(( ! $? )) && echo "done." || echo "failed."
 
-	echo -e "Automated update of $BUILDSPACE_NAME buildspace completed.\n"
+	echo -e "\nAutomated update of $BUILDSPACE_NAME buildspace completed.\n"
 fi
 
 # Bzip any log files larger than 100k

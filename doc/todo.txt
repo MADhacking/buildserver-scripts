@@ -8,8 +8,11 @@ Check for version change of key packages before performing related update checks
 	portageq portdir
 
 Kernel			modules-rebuild
-Linux headers	glibc rebuild
-Perl			perl-cleaner
-Python			python-updater
+Linux headers	glibc rebuild, perl headers rebuild (done)
+Perl			perl-cleaner												DONE
+Python			python-updater												DONE
 GCC				gcc-config && emerge -e world
 
+delete-redundant-libs
+	should rebuild packages _containing_ preserved libraries
+	
