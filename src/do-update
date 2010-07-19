@@ -185,9 +185,12 @@ else
 	(( ! $? )) && echo "done." || echo "failed."
 
 	# Store any new news items for email attachment later
-	echo -n "Checking for news..."
-	exec_and_log news "eselect news read new"
-	(( ! $? )) && echo "done." || echo "failed."
+	NEWSITEMS=$(eselect news count new)
+	if (( ${NEWSITEMS} > 0 )); then
+		echo -n "Getting ${NEWSITEMS} news item(s) for later reading..."
+		exec_and_log news "eselect news read new"
+		(( ! $? )) && echo "done." || echo "failed."
+	fi
 
 	echo -e "\nAutomated update of [$BUILDSPACE_NAME] buildspace completed.\n"
 fi
