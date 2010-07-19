@@ -67,7 +67,7 @@ else
 	[[ -z ${PRE_GLIBC_PKG} ]] && echo "Error: Unable to retrieve current sys-libs/glibc version" && exit 4
 	
 	echo "Key package versions [pre update]"
-	echo "    ${PRE_PERLPKG}"
+	echo "    ${PRE_PERL_PKG}"
 	echo "    ${PRE_PYTHON_PKGS} in slot(s) ${PRE_PYTHON_SLOT}"
 	echo "    ${PRE_PORTAGE_PKG}"
 	echo "    ${PRE_GCC_PKGS} in slot(s) ${PRE_GCC_SLOT}"
@@ -133,7 +133,7 @@ else
 	POST_GLIBC_PKG=$(qlist -I -C -v -e sys-libs/glibc)
 
 	echo -e "\nKey package versions [post update]"
-	echo "    ${POST_PERLPKG}"
+	echo "    ${POST_PERL_PKG}"
 	echo "    ${POST_PYTHON_PKGS} in slot(s) ${POST_PYTHON_SLOT}"
 	echo "    ${POST_PORTAGE_PKG}"
 	echo "    ${POST_GCC_PKGS} in slot(s) ${POST_GCC_SLOT}"
