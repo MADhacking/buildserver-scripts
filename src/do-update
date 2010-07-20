@@ -74,6 +74,13 @@ else
 	echo "    ${PRE_HEADERS_PKG}"
 	echo -e "    ${PRE_GLIBC_PKG}\n"
 			
+	# Ensure that key slotted packages are specified in world file and include slot number
+	if [[ -n $(manage-slot-in-world --add-installed --pretend dev-lang/python sys-devel/gcc) ]]; then
+		echo "Ensuring that key packages are in world file and include slot number"
+		manage-slot-in-world --add-installed dev-lang/python sys-devel/gcc
+		echo
+	fi 
+	 
 	# Build updated packages
 	echo -n "Building updated packages..."
 	exec_and_log build_phase "emerge -uDN world --keep-going"
@@ -194,6 +201,13 @@ else
 		(( ! $? )) && echo "done." || echo "failed."
 	fi
 
+	# Display any slotted packages which are no longer available
+	if [[ -n $(manage-slot-in-world --remove-unavailable --pretend dev-lang/python sys-devel/gcc) ]]; then
+		echo "The following key packages are no longer available in portage"
+		manage-slot-in-world --remove-unavailable --pretend dev-lang/python sys-devel/gcc
+		echo
+	fi 
+	 
 	echo -e "\nAutomated update of [$BUILDSPACE_NAME] buildspace completed.\n"
 fi
 
