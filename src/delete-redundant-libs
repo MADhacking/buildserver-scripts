@@ -79,8 +79,18 @@ DELETELIBS=$(awk '/# rm/ { x=1; do { x++; } while ($(x-1) != "rm") print $x }' <
 if [[ -z ${DELETELIBS} ]]; then
 	echo "    none"
 else
+	PKGLIST=" "
 	for L in ${DELETELIBS}; do
-		echo "    ${L}"
+		if [[ -e ${L} ]]; then
+			echo "    ${L} - "
+			OWNINGPKG=$(qfile -v -C ${L} | cut -f 1 -d " ")
+			if [[ -n ${OWNINGPKG} ]]; then
+				echo "owned by ${OWNINGPKG}"
+				[[ "${PKGLIST}" =~ [[:blank:]]${OWNINGPKG}[[:blank:]] ]] || PKGLIST="${PKGLIST}${OWNINGPKG} "
+			else
+				echo "unclaimed"
+			fi
+		fi
 	done
 fi
 
@@ -93,18 +103,30 @@ if [[ -n ${REBUILDLIBS} ]]; then
 	for L in ${REBUILDLIBS}; do
 		echo -n "    ${L} "
 		revdep-rebuild --no-progress --library ${L} \
-			1>${LOGPATH}/delete_redundant_libs.${L}.aux.out.log 2>${LOGPATH}/delete_redundant_libs.${L}.aux.err.log
+			1>${LOGPATH}/delete_redundant_libs.rr.${L}.aux.out.log 2>${LOGPATH}/delete_redundant_libs.rr.${L}.aux.err.log
 		(( ! $? )) && echo " - ok" || echo " - failed"
 	done
 fi
 
-# Search the build log and delete any libraries which can be safely removed.
+# Delete any libraries which are no longer needed
 if [[ -n ${DELETELIBS} ]]; then
 	echo -e "\nDeleting old libraries:"  
 	for L in ${DELETELIBS}; do
-		echo "    ${L}"
-		rm ${L}
+		if [[ -e ${L} ]]; then
+			echo -n "    ${L}"
+			rm ${L}
+			(( ! $? )) && echo " - ok" || echo " - failed"
+		fi
+	done
+fi
+
+# Rebuild any binary packages containing above libraries
+if [[ -n ${PKGLIST} && ${PKGLIST} != " " ]]; then 
+	echo -e "\nRebuilding binary packages containing preserved libraries:"
+	for PKG in ${PKGLIST}; do
+		echo -n "    ${PKG} "
+		emerge -1 =${PKG} \
+			1>${LOGPATH}/delete_redundant_libs.rm.${L}.aux.out.log 2>${LOGPATH}/delete_redundant_libs.rm.${L}.aux.err.log
 		(( ! $? )) && echo " - ok" || echo " - failed"
 	done
 fi
-	
