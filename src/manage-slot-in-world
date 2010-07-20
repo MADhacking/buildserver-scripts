@@ -68,6 +68,10 @@ if [[ -z ${ADD} && -z ${REMOVE} ]]; then
 	REMOVE="yes"
 fi
 
+# Get the portage directory
+PORTDIR=$(portageq portdir)
+[[ -z ${PORTDIR} ]] && echo "ERROR: Unable to locate PORTDIR" >&2 && exit 2
+
 # If we have been asked to add packages to the world file then...
 if [[ -n ${ADD} ]]; then
 	# ...loop through the packages we were passed...
@@ -112,7 +116,7 @@ if [[ -n ${REMOVE} ]]; then
 			echo "ERROR: No slot specified versions of ${PKG} are installed" >&2
 		else
 			for SLOT in ${PKG_SLOTS}; do
-				PKG_VER=$(portageq best_visible /mnt/portage/portage ${SLOT})
+				PKG_VER=$(portageq best_visible ${PORTDIR} ${SLOT})
 				if [[ -z ${PKG_VER} || -n ${REMOVEALL} ]]; then
 					if [[ -z ${WORLDMOD} && -n ${PRETEND} ]]; then
 						cp /var/lib/portage/world /var/lib/portage/world.bak
