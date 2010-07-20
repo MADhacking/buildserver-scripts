@@ -4,8 +4,8 @@ function helpscreen
 {
 	NAME=$(basename ${0})
 	echo "Usage: ${NAME} [OPTION]... PACKAGE [PACKAGE]..."
-	echo "Automatically applies patches and copies files from the location specified in"
-	echo "or passed on the command line to the portage tree."
+	echo "Manages slot specific package entries in the world file to ensure that depclean"
+	echo "does not clean needed packages and unavailable packages are noted."
 	echo
 	echo "  -a, --add-installed            adds the currently installed SLOTted versions of"
 	echo "                                 PACKAGEs to the world file"
