@@ -126,7 +126,7 @@ if [[ -n ${PKGLIST} && ${PKGLIST} != " " ]]; then
 	for PKG in ${PKGLIST}; do
 		echo -n "    ${PKG} "
 		emerge -1 =${PKG} \
-			1>${LOGPATH}/delete_redundant_libs.rm.${L}.aux.out.log 2>${LOGPATH}/delete_redundant_libs.rm.${L}.aux.err.log
+			1>${LOGPATH}/delete_redundant_libs.rm.${PKG}.aux.out.log 2>${LOGPATH}/delete_redundant_libs.rm.${PKG}.aux.err.log
 		(( ! $? )) && echo " - ok" || echo " - failed"
 	done
 fi
