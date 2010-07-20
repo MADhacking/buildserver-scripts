@@ -134,7 +134,7 @@ else
 	
 	# Rebuild broken binaries
 	echo -n "Rebuilding broken binaries (pass 1 - pretend)..."
-	exec_and_log revdep_rebuild_1_pretend "revdep-rebuild -i -p -P"
+	exec_and_log revdep_rebuild_1_pretend "revdep-rebuild -pi -P -- --keep-going"
 	(( ! $? )) && echo "done." || echo "failed."
 	if [[ -e /var/cache/revdep-rebuild/3_broken.rr ]]; then
 		echo -n "Rebuilding broken binaries (pass 1 - remerge)..."
@@ -142,7 +142,7 @@ else
 		(( ! $? )) && echo "done." || echo "failed."
 		
 		echo -n "Rebuilding broken binaries (pass 2 - pretend)..."
-		exec_and_log revdep_rebuild_2_pretend "revdep-rebuild -i -p -P"
+		exec_and_log revdep_rebuild_2_pretend "revdep-rebuild -pi -P -- --keep-going"
 		(( ! $? )) && echo "done." || echo "failed."
 		if [[ -e /var/cache/revdep-rebuild/3_broken.rr ]]; then
 			echo -n "Rebuilding broken binaries (pass 2 - remerge)..."
