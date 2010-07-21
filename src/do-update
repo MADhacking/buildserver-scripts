@@ -5,7 +5,8 @@ env-update --no-ldconfig &>/dev/null
 source /etc/profile &>/dev/null
 
 # Init local vars
-CFGFILE=/etc/buildserver
+CFGFILE=/etc/buildspace
+CMDNAME=$(basename ${0})
 
 # If the config file exists and we can read it do so
 [[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
@@ -16,7 +17,7 @@ source _outcatcher.sh
 init_logging ${LOGPATH}
 
 # Check to make sure we are being run from inside the buildspace.
-[[ -z "$BUILDSPACE_NAME" ]] && echo "ERROR: $0 should only be run from inside a buildspace!" >&2 && exit 1
+[[ -z "${BUILDSPACE_NAME}" ]] && echo "ERROR: ${CMDNAME} should only be run inside a configured buildspace!" >&2 && exit 1
 
 # Clean the portage and binary package temporary directories
 PTD=$(portageq envvar PORTAGE_TMPDIR)
@@ -29,9 +30,9 @@ rm -rf ${PTD}/binpkgs/*
 # If we are not being run from a TTY then redirect output to ~/update.out
 tty -s
 tty=$?
-[[ $tty -gt 0 ]] && exec 1> ~/update.out.log
+[[ $tty -gt 0 ]] && exec 1> ${LOGPATH}/update.out.log
 
-echo -e "Starting automated update of [$BUILDSPACE_NAME] buildspace.\n"
+echo -e "Starting automated update of [${BUILDSPACE_NAME}] buildspace.\n"
 
 # Ensure free space is available for distfiles
 free-distfiles-space --free-delete
@@ -208,7 +209,7 @@ else
 		echo
 	fi 
 	 
-	echo -e "\nAutomated update of [$BUILDSPACE_NAME] buildspace completed.\n"
+	echo -e "\nAutomated update of [${BUILDSPACE_NAME}] buildspace completed.\n"
 fi
 
 # Bzip any log files larger than 100k
@@ -218,9 +219,9 @@ bzip_large_logs 102400
 # end the redirect of 1&2 otherwise display summary message.
 get_log_files logfiles
 if [[ $tty -gt 0 ]]; then
-	mutt -s "Automated update of $BUILDSPACE_NAME" \
+	mutt -s "Automated update of ${BUILDSPACE_NAME}" \
          -a ${logfiles} \
-         -- root < ~/update.out.log
+         -- root < ${LOGPATH}/update.out.log
   	exec 1>&1
 	(( ! $? )) && clean_up_logs
 else

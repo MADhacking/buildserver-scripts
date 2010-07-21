@@ -1,0 +1,32 @@
+#! /bin/bash
+
+function helpscreen
+{
+	echo "Usage: ${CMDNAME}"
+	echo "Rebuilds the portage metadata and, if eix is installed, rebuilds the eix cache"
+}
+
+# Init local vars
+CFGFILE=/etc/buildspace
+CMDNAME=$(basename ${0})
+
+# If we have been run with parameters then display help and quit
+[[ -n ${1} ]] && helpscreen && exit
+
+# If the config file exists and we can read it do so
+[[ ! -r ${CFGFILE} ]] && echo "Error: No config file (or no read permissions) at ${CFGFILE}" >&2 && exit 2
+source ${CFGFILE}
+
+# Check to make sure we are being run from inside the buildspace.
+[[ -z "${BUILDSPACE_NAME}" ]] && echo "ERROR: ${CMDNAME} should only be run inside a configured buildspace!" >&2 && exit 1
+
+echo -n "Rebuilding metadata cache for [${BUILDSPACE_NAME}] build-space..." 
+emerge --metadata --quiet 1>/dev/null
+(( ! $? )) && echo "done." || echo "failed."
+
+# If eix is installed then update the cache
+if [[ -x /usr/bin/eix-update ]]; then
+	echo -n "Rebuilding eix cache for [${BUILDSPACE_NAME}] build-space..."
+	eix-update --quiet
+	(( ! $? )) && echo "done." || echo "failed."
+fi

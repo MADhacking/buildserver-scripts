@@ -8,11 +8,13 @@ __logszipped=false
 # $1 should contain the base path for log files
 function init_logging()
 {
-	[[ -n "${__logpath}" ]] && echo "ERROR! Logging already initialised." && exit 2
+	[[ -n "${__logpath}" ]] && echo "ERROR! Logging already initialised." >&2 && exit 127
 
 	__logpath="${1}"
 	mkdir -p ${__logpath}
 	rm ${__logpath}/* -f
+	
+	[[ ! -w ${__logpath} ]] && echo "ERROR! Unable to write to ${__logpath}" >&2 && exit 127
 }
 
 # Execute a command and log stdout and stderr to files
@@ -22,7 +24,7 @@ function init_logging()
 # added to __logfiles list.
 function exec_and_log()
 {
-	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 1
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." >&2 && exit 127
 
 	l1="${__logpath}/${1}.out.log"
 	l2="${__logpath}/${1}.err.log"
@@ -43,7 +45,7 @@ function exec_and_log()
 # $1 should contain the base file name
 function add_aux_logs()
 {
-	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 1
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." >&2 && exit 127
 	
 	logs=${__logpath}/${1}.*.aux.*.log
 	for l in ${logs}
@@ -57,8 +59,8 @@ function add_aux_logs()
 # $1 should contain the minimum size of the log before bzip will be used
 function bzip_large_logs()
 {
-	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 1
-	if ${__logszipped} ; then echo "ERROR! Logs already bzipped." ; exit 3 ; fi
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." >&2 && exit 127
+	if ${__logszipped} ; then echo "ERROR! Logs already bzipped." >&2 && exit 127 ; fi
 
 	nlf=""
 	for lf in ${__logfiles}
@@ -74,7 +76,7 @@ function bzip_large_logs()
 # Returns a list of log files in $1
 function get_log_files()
 {
-	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." >&2 && exit 127 
 
 	OFS="|"
 	eval "$1=\"${__logfiles}\""
@@ -84,7 +86,7 @@ function get_log_files()
 # Removes all log files
 function clean_up_logs()
 {
-	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." && exit 1
+	[[ -z "${__logpath}" ]] && echo "ERROR! Logging not initialised." >&2 && exit 127
 
 	for lf in ${__logfiles}
 	do
