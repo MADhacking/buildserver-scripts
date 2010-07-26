@@ -1,0 +1,21 @@
+# Path to the directory containing the build-spaces
+BUILDSPACEROOT="/mnt/buildspaces"
+
+# List of build-spaces on the same architecture as the host 
+BUILDSPACESXX="x86-64bit-server x86-64bit-workstation"
+
+# List of build-spaces requiring linux32 to be executed prior to chroot
+BUILDSPACES32="x86-32bit-server x86-32bit-workstation"
+
+# Path to the directory containing the repositories 
+REPOSROOT="/mnt/repositories"
+
+# Gentoo rsync location and options
+GENTOORSYNC="rsync.gentoo.org::gentoo-portage"
+GENTOORSOPT="--quiet --delete --archive --no-D --delete-during"
+
+# Should we run auto-patch --sync when synchronising the live repository.
+AUTOPATCHSYNC="yes"
+
+# Repository rsync options
+REPORSOPT="--quiet --delete --archive --no-D --delete-during"

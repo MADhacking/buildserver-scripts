@@ -1,0 +1,138 @@
+#! /bin/bash
+
+function helpscreen
+{
+	echo "Usage: ${CMDNAME} [OPTION]..."
+	echo "Automatically applies patches and copies files from the location specified in"
+	echo "${CFGFILE} or passed on the command line to the portage tree."
+	echo
+	echo "  -l, --live                     synchronise the \"live\" portage repository"
+	echo "                                 with the remote Gentoo portage repository"
+#	echo
+	echo "  -t BS [BS]...,                 synchronise the testing portage repository"
+	echo "  --test BS [BS]...              for the BS build-space(s) with the \"live\""
+	echo "                                 portage repository"
+#	echo
+	echo "  -s BS [BS]...,                 synchronise the stable configuration, portage,"
+	echo "  --stable BS [BS]...            kernel and package repository for the BS"
+	echo "                                 build-space(s) with the testing repository"
+}
+
+function echoq
+{
+	[[ -z ${QUIET} ]] && echo $1 $2 $3 $4
+}
+
+function okorfail
+{
+	if (( ! $? )); then
+		echoq "ok." 
+	else
+		echoq "failed."
+		EXITSTATUS=$1
+	fi
+}
+
+# Init global vars
+CFGFILE=/etc/buildspaces
+CMDNAME=$(basename ${0})
+EXITSTATUS=0
+
+# Process command line switches
+while (( $# > 0 ))
+do
+	case $1 in
+	    -l|--live)
+			LIVEREPO=1
+			shift 1
+	    ;;
+	    -t|--test)
+	    	TESTREPO=1
+			shift 1
+			while [[ (( $# > 0 )) && ${1::1} != "-" ]]
+			do
+				[[ -z ${TESTREPOS} ]] && TESTREPOS=$1 || TESTREPOS="${TESTREPOS} $1"
+				shift 1
+			done
+		;;
+	    -s|--stable)
+	    	STABLEREPO=1
+			shift 1
+			while [[ (( $# > 0 )) && ${1::1} != "-" ]]
+			do
+				[[ -z ${STABLEREPOS} ]] && STABLEREPOS=$1 || STABLEREPOS="${STABLEREPOS} $1"
+				shift 1
+			done
+		;;
+
+		*)
+			helpscreen
+			shift 1
+			exit
+		;;
+	esac
+done
+
+# If the config file exists and we can read it do so, otherwise complain and quit
+[[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
+source ${CFGFILE}
+
+# Check configuration
+[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 2
+if [[ -n ${LIVEREPO} ]]; then
+	[[ -z ${GENTOORSYNC} ]] && echo "ERROR: No GENTOORSYNC set in ${CFGFILE}" >&2 && exit 2
+	[[ -z ${GENTOORSOPT} ]] && echo "ERROR: No GENTOORSOPT set in ${CFGFILE}" >&2 && exit 2
+fi
+if [[ -n ${TESTREPO} || -n ${STABLEREPO} ]]; then
+	[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
+		&& echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 2
+	[[ -z ${REPORSOPT} ]] && echo "ERROR: No REPORSOPT set in ${CFGFILE}" >&2 && exit 2
+fi
+
+# If we have been asked to sync the "live" repository...
+if [[ -n ${LIVEREPO} ]]; then
+	echoq -n "Synchronising the \"live\" portage tree..."
+	rsync ${GENTOORSYNC} ${REPOSROOT}/live/portage ${GENTOORSOPT}
+	okorfail 3
+	if [[ ${AUTOPATCHSYNC} == "yes" ]]; then
+		echoq -n "Synchronising the auto-patch patch-sets..."
+		auto-patch-portage --sync --quiet
+		okorfail 3
+	fi
+	(( ${EXITSTATUS} != 0 )) && exit ${EXITSTATUS}
+fi
+
+# If we have been asked to sync a testing repository...
+if [[ -n ${TESTREPO} ]]; then
+	# If we have been asked to sync "all" repositories then assemble a list
+	[[ ${TESTREPOS} = "all" ]] && TESTREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
+
+	# Loop through the repositories...
+	for REPO in ${TESTREPOS}; do
+		# Check that this appears to be a repository
+		if [[ ! -d ${REPOSROOT}/testing/${REPO} ]]; then
+			echo "ERROR: No buildspace at ${REPOSROOT}/testing/${REPO}" >&2 && exit 2
+		fi
+		
+		echoq -n "Synchronising the \"live\" portage tree to the ${REPO} testing repository..."
+		rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${REPORSOPT}
+		okorfail 4
+		
+		if [[ -d ${REPOSROOT}/live/patch-sets ]]; then
+			echoq -n "Synchronising the \"live\" patch-sets to the ${REPO} testing repository..."
+			mkdir -p ${REPOSROOT}/testing/${REPO}/patch-sets
+			rsync ${REPOSROOT}/live/patch-sets/ ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPORSOPT}
+			okorfail 5
+		fi
+		if [[ -d ${REPOSROOT}/live/overlays ]]; then
+			echoq -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
+			mkdir -p ${REPOSROOT}/testing/${REPO}/overlays
+			rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${REPORSOPT}
+			okorfail 6
+		fi
+	done
+	(( ${EXITSTATUS} != 0 )) && exit ${EXITSTATUS}
+fi
+
+
+exit ${EXITSTATUS}
