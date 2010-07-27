@@ -14,8 +14,19 @@ REPOSROOT="/mnt/repositories"
 GENTOORSYNC="rsync.gentoo.org::gentoo-portage"
 GENTOORSOPT="--quiet --delete --archive --no-D --delete-during"
 
-# Should we run auto-patch --sync when synchronising the live repository.
+# Should we run auto-patch --sync when synchronising the live repository
+# and if so which options we should pass
 AUTOPATCHSYNC="yes"
+AUTOPATCHSYNCOPTS="--quiet --sync"
 
 # Repository rsync options
 REPORSOPT="--quiet --delete --archive --no-D --delete-during"
+
+# Should we run auto-patch when synchronising a testing repository
+# and if so which options we should pass
+AUTOPATCHTEST="yes"
+AUTOPATCHTESTOPTS="--quiet --copy-files --apply-patches"
+
+# Should we run rebuild-portage-caches inside the build-space when
+# synchronising a testing repository.
+AUTOREBUILD="yes"
