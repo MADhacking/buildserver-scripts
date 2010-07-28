@@ -292,30 +292,34 @@ if [[ -n ${STABLEREPO} ]]; then
 		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
 			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping"
 		else			 
+	 		# Synchronise the testing configurations to the stable repository 
+			echoq -n "Synchronising the testing configurations to the ${REPO} stable repository..."
+			rsync ${REPOSROOT}/testing/${REPO}/conf/ ${REPOSROOT}/stable/${REPO}/conf/ ${REPORSOPT}
+			okorfail 11
 	 		# Synchronise the testing portage tree to the stable repository 
 			echoq -n "Synchronising the testing portage tree to the ${REPO} stable repository..."
 			rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${REPORSOPT}
-			okorfail 4
+			okorfail 12
 			# If they exist synchronise the testing patch-sets and overlays too
 			if [[ -d ${REPOSROOT}/testing/${REPO}/patch-sets ]]; then
 				echoq -n "Synchronising the testing patch-sets to the ${REPO} stable repository..."
 				mkdir -p ${REPOSROOT}/stable/${REPO}/patch-sets
 				rsync ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPOSROOT}/stable/${REPO}/patch-sets/ ${REPORSOPT}
-				okorfail 5
+				okorfail 13
 			fi
 			if [[ -d ${REPOSROOT}/testing/${REPO}/overlays ]]; then
 				echoq -n "Synchronising the testing overlays to the ${REPO} stable repository..."
 				mkdir -p ${REPOSROOT}/stable/${REPO}/overlays
 				rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${REPORSOPT}
-				okorfail 6
+				okorfail 14
 			fi
 			# Then synchronise packages and kernels
 			echoq -n "Synchronising the testing packages to the ${REPO} stable repository..."
 			rsync ${REPOSROOT}/testing/${REPO}/packages/ ${REPOSROOT}/stable/${REPO}/packages/ ${REPORSOPT}
-			okorfail 7
+			okorfail 15
 			echoq -n "Synchronising the testing kernels to the ${REPO} stable repository..."
 			rsync ${REPOSROOT}/testing/${REPO}/kernels/ ${REPOSROOT}/stable/${REPO}/kernels/ ${REPORSOPT}
-			okorfail 8
+			okorfail 16
 		fi
 		
 		DONEONE=1
