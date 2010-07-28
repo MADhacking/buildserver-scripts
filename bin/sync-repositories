@@ -290,7 +290,7 @@ if [[ -n ${STABLEREPO} ]]; then
 		# Check that the "updated flag" has been set or the --force option specified
 		[[ -n ${DONEONE} ]] && echoq 
 		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
-			echo "The ${REPO} has not been updated since the last --sync-test and --force not specified, skipping"
+			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping"
 		else			 
 	 		# Synchronise the testing portage tree to the stable repository 
 			echoq -n "Synchronising the testing portage tree to the ${REPO} stable repository..."
