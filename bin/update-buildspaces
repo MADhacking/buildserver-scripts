@@ -2,16 +2,20 @@
 
 function helpscreen
 {
-	echo "Usage: ${CMDNAME} [OPTION]..."
-	echo "Automatically updates all build-spaces listed in ${CFGFILE}"
+	echo "Usage: ${CMDNAME} [OPTION]... BS [BS]..."
+	echo "Automatically updates specified build-space(s) or those listed in"
+	echo "${CFGFILE} if BS is all"
 	echo
-	echo "  -p, --pretend                  do not perform any actions but list the"
-	echo "                                 commands which would be executed"
+	echo "  -p, --pretend                  do not perform any actions"
 }
 
 # Init global vars
 CFGFILE=/etc/buildspaces
 CMDNAME=$(basename ${0})
+EXITSTATUS=0
+
+# If we can read the config file do so
+[[ -r ${CFGFILE} ]] && source ${CFGFILE}
 
 # Process command line switches
 while (( $# > 0 ))
@@ -22,35 +26,74 @@ do
 			shift 1
 	    ;;
 				
-		*)
+		-*|--*)
 			helpscreen
 			shift 1
 			exit
 		;;
+		
+		*)
+			# Add this build-space to the list of build-spaces
+			[[ -z ${BUILDSPACES} ]] && BUILDSPACES=$1 || BUILDSPACES="${BUILDSPACES} $1"
+			shift 1
+		;;
 	esac
 done
 
-# If the config file exists and we can read it do so, otherwise complain and quit
+# If we can't read the config file complain and quit
 [[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
-source ${CFGFILE}
 
-# Check config
+# Check configuration
+[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 2
 [[ -z ${BUILDSPACEROOT} ]] && echo "ERROR: No BUILDSPACEROOT set in ${CFGFILE}" >&2 && exit 2
 [[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
 	 && echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 2
 
-# Execute update-buildspace for all XXbit buildspaces
-if [[ -n ${BUILDSPACESXX} ]]; then
-	for BS in ${BUILDSPACESXX}; do
-		UDC="chroot ${BUILDSPACEROOT}/${BS} /usr/bin/update-buildspace"
-		[[ -n ${PRETEND} ]] && echo ${UDC} || ${UDC}
-	done
-fi
+# If we have been asked to update all build-spaces make a list
+[[ ${BUILDSPACES} = "all" ]] && BUILDSPACES="${BUILDSPACESXX} ${BUILDSPACES32}"
 
-# Execute update-buildspace for all 32bit buildspaces
-if [[ -n ${BUILDSPACES32} ]]; then
-	for BS in ${BUILDSPACES32}; do
-		UDC="linux32 chroot ${BUILDSPACEROOT}/${BS} /usr/bin/update-buildspace"
-		[[ -n ${PRETEND} ]] && echo ${UDC} || ${UDC}
-	done
-fi
+# Loop through the build-spaces...
+for BUILDSPACE in ${BUILDSPACES}; do
+	# Check that this appears to be a build-space
+	[[ ! " ${BUILDSPACESXX} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] && \
+	   ! " ${BUILDSPACES32} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] ]] \
+		&& echo "ERROR: ${BUILDSPACE} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
+	[[ ! -d ${BUILDSPACEROOT}/${BUILDSPACE} ]] && \
+		echo "ERROR: No build-space at ${BUILDSPACEROOT}/${BUILDSPACE}" >&2 && exit 2
+
+	# If the build-space is on the same architecture as the host run update-buildspace
+	# otherwise run linux32 update-buildspace
+	if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] ]]; then
+		echo -n "Updating the [native] ${BUILDSPACE} build-space..."
+		if [[ -z ${PRETEND} ]]; then
+			chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+			if (( ! $? )); then
+				echo "ok." 
+				# Set the updated "flag"
+				touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+			else
+				echo "failed."
+				EXITSTATUS=3
+			fi
+		else
+			echo "pretend."
+		fi 
+	else
+		echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
+		if [[ -z ${PRETEND} ]]; then
+			linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+			if (( ! $? )); then
+				echo "ok." 
+				# Set the updated "flag"
+				touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+			else
+				echo "failed."
+				EXITSTATUS=3
+			fi
+		else
+			echo "pretend."
+		fi 
+	fi
+done
+
+exit ${EXITSTATUS}	
