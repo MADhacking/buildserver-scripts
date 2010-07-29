@@ -6,7 +6,10 @@ function helpscreen
 	echo "Automatically updates specified build-space(s) or those listed in"
 	echo "${CFGFILE} if BS is all"
 	echo
-	echo "  -p, --pretend                  do not perform any actions"
+	echo "  -f, --force                    always update the build-space(s) regardless"
+	echo "                                 of the current buid-space state"
+	echo "  -p, --pretend                  do not perform any actions simply list the"
+	echo "                                 build-space(s) which would be updated"
 }
 
 # Init global vars
@@ -21,6 +24,10 @@ EXITSTATUS=0
 while (( $# > 0 ))
 do
 	case $1 in
+	    -f|--force)
+			FORCE=1
+			shift 1
+	    ;;
 	    -p|--pretend)
 			PRETEND=1
 			shift 1
@@ -64,34 +71,46 @@ for BUILDSPACE in ${BUILDSPACES}; do
 	# If the build-space is on the same architecture as the host run update-buildspace
 	# otherwise run linux32 update-buildspace
 	if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] ]]; then
-		echo -n "Updating the [native] ${BUILDSPACE} build-space..."
-		if [[ -z ${PRETEND} ]]; then
-			chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
-			if (( ! $? )); then
-				echo "ok." 
-				# Set the updated "flag"
-				touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
-			else
-				echo "failed."
-				EXITSTATUS=3
-			fi
+		# If the build-space has already been successfully updated since the last sync
+		# and the --force flag has not been used then display a warning and skip it.
+		if [[ -f ${REPOSROOT}/testing/${BUILDSPACE}/updated && -z ${FORCE} ]]; then
+			echo "Skipping the [native] ${BUILDSPACE} build-space...already updated."
 		else
-			echo "pretend."
+			echo -n "Updating the [native] ${BUILDSPACE} build-space..."
+			if [[ -z ${PRETEND} ]]; then
+				chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+				if (( ! $? )); then
+					echo "ok." 
+					# Set the updated "flag"
+					touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+				else
+					echo "failed."
+					EXITSTATUS=3
+				fi
+			else
+				echo "pretend."
+			fi
 		fi 
 	else
-		echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
-		if [[ -z ${PRETEND} ]]; then
-			linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
-			if (( ! $? )); then
-				echo "ok." 
-				# Set the updated "flag"
-				touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
-			else
-				echo "failed."
-				EXITSTATUS=3
-			fi
+		# If the build-space has already been successfully updated since the last sync
+		# and the --force flag has not been used then display a warning and skip it.
+		if [[ -f ${REPOSROOT}/testing/${BUILDSPACE}/updated && -z ${FORCE} ]]; then
+			echo "Skipping the [23-bit] ${BUILDSPACE} build-space...already updated."
 		else
-			echo "pretend."
+			echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
+			if [[ -z ${PRETEND} ]]; then
+				linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+				if (( ! $? )); then
+					echo "ok." 
+					# Set the updated "flag"
+					touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+				else
+					echo "failed."
+					EXITSTATUS=3
+				fi
+			else
+				echo "pretend."
+			fi
 		fi 
 	fi
 done
