@@ -1,5 +1,24 @@
 #! /bin/bash
 
+function versioninfo
+{
+	VERSION="$Revision$"
+	VERSION="${VERSION%\ \$}"; VERSION="${VERSION#\:}"; VERSION="${VERSION##\ }"
+	VERSION="(CVS revision $VERSION)"
+	
+	NAME="$Name$"
+	NAME="${NAME%\ \$}"; NAME="${NAME#\:}"; NAME="${NAME##\ }"; NAME="${NAME##release-}"; NAME="${NAME//-/.}"
+	[[ -n $NAME ]] && NAME="Version $NAME "
+
+	echo ${CMDNAME}
+	echo ${NAME}${VERSION}
+
+	echo -e "\nCopyright (C) 2010 Hacking Network Solutions"
+	echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
+	echo "This is free software: you are free to change and redistribute it."
+	echo "There is NO WARRANTY, to the extent permitted by law."
+}
+
 function helpscreen
 {
 	echo "Usage: ${CMDNAME} [OPTION]... BS [BS]..."
@@ -10,6 +29,9 @@ function helpscreen
 	echo "                                 of the current buid-space state"
 	echo "  -p, --pretend                  do not perform any actions simply list the"
 	echo "                                 build-space(s) which would be updated"
+	echo "      --help                     display this help and exit"
+    echo "      --version                  output version information and exit"
+
 }
 
 # Init global vars
@@ -32,10 +54,12 @@ do
 			PRETEND=1
 			shift 1
 	    ;;
-				
+			
+		--version)
+			versioninfo
+			exit	
 		-*|--*)
 			helpscreen
-			shift 1
 			exit
 		;;
 		
