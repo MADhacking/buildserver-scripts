@@ -1,5 +1,24 @@
 #! /bin/bash
 
+function versioninfo
+{
+	VERSION="$Revision$"
+	VERSION="${VERSION%\ \$}"; VERSION="${VERSION#\:}"; VERSION="${VERSION##\ }"
+	VERSION="(CVS revision $VERSION)"
+	
+	NAME="$Name$"
+	NAME="${NAME%\ \$}"; NAME="${NAME#\:}"; NAME="${NAME##\ }"; NAME="${NAME##release-}"; NAME="${NAME//-/.}"
+	[[ -n $NAME ]] && NAME="Version $NAME "
+
+	echo ${CMDNAME}
+	echo ${NAME}${VERSION}
+
+	echo -e "\nCopyright (C) 2010 Hacking Network Solutions"
+	echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
+	echo "This is free software: you are free to change and redistribute it."
+	echo "There is NO WARRANTY, to the extent permitted by law."
+}
+
 function helpscreen
 {
 	echo "Usage: ${CMDNAME} [OPTION]..."
@@ -27,6 +46,8 @@ function helpscreen
 	echo "  -f, --force                    force synchronisation between testing and stable"
 	echo "                                 repositories even when update-buildspace has"
 	echo "                                 not been run since the last --sync-test"
+	echo "      --help                     display this help and exit"
+    echo "      --version                  output version information and exit"
 }
 
 function echoq
@@ -110,6 +131,10 @@ do
 			shift 1
 	    ;;
 
+		--version)
+			versioninfo
+			exit
+		;;	
 		*)
 			helpscreen
 			shift 1

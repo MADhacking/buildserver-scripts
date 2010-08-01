@@ -31,7 +31,6 @@ function helpscreen
 	echo "                                 build-space(s) which would be updated"
 	echo "      --help                     display this help and exit"
     echo "      --version                  output version information and exit"
-
 }
 
 # Init global vars
@@ -57,7 +56,8 @@ do
 			
 		--version)
 			versioninfo
-			exit	
+			exit
+		;;	
 		-*|--*)
 			helpscreen
 			exit
