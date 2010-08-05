@@ -119,7 +119,7 @@ for BUILDSPACE in ${BUILDSPACES}; do
 		# If the build-space has already been successfully updated since the last sync
 		# and the --force flag has not been used then display a warning and skip it.
 		if [[ -f ${REPOSROOT}/testing/${BUILDSPACE}/updated && -z ${FORCE} ]]; then
-			echo "Skipping the [23-bit] ${BUILDSPACE} build-space...already updated."
+			echo "Skipping the [32-bit] ${BUILDSPACE} build-space...already updated."
 		else
 			echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
 			if [[ -z ${PRETEND} ]]; then

@@ -87,7 +87,7 @@ do
 			shift 1
 	    ;;
 	    -n|--no-auto)
-	    	unset AUTOPATCHSYNC AUTOPATCHTEST AUTOREBUILD
+	    	unset AUTOPATCHSYNC AUTOLAYMANSYNC AUTOPATCHTEST AUTOREBUILD 
 			shift 1
 	    ;;
 	    -t|--sync-test)
@@ -169,6 +169,11 @@ if [[ -n ${LIVEREPO} ]]; then
 	echoq -n "Synchronising the \"live\" portage tree..."
 	rsync ${GENTOORSYNC} ${REPOSROOT}/live/portage ${GENTOORSOPT}
 	okorfail 3
+	if [[ ${AUTOLAYMANSYNC} == "yes" ]]; then
+		echoq -n "Synchronising the layman overlays..."
+		layman --sync-all  --quietness=1
+		okorfail 3
+	fi
 	if [[ ${AUTOPATCHSYNC} == "yes" ]]; then
 		echoq -n "Synchronising the auto-patch patch-sets..."
 		auto-patch-portage ${AUTOPATCHSYNCOPTS} --sync 
