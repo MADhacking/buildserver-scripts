@@ -223,7 +223,7 @@ if [[ -n ${TESTREPO} ]]; then
 		# Then run auto-patch-portage if instructed to do so		
 		if [[ ${AUTOPATCHTEST} == "yes" ]]; then
 			echoq -n "Running auto-patch-portage on the ${REPO} testing repository..."
-			auto-patch-portage --quiet ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage
+			auto-patch-portage ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage
 			okorfail 7
 		fi
 		# And finally rebuild-portage-caches if instructed to do so
@@ -320,7 +320,7 @@ if [[ -n ${STABLEREPO} ]]; then
 		# Check that the "updated flag" has been set or the --force option specified
 		[[ -n ${DONEONE} ]] && echoq 
 		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
-			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping"
+			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping."
 		else			 
 	 		# Synchronise the testing configurations to the stable repository 
 			echoq -n "Synchronising the testing configurations to the ${REPO} stable repository..."
