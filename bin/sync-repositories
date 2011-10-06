@@ -61,7 +61,7 @@ function okorfail
 	if (( ! $? )); then
 		echoq "ok." 
 	else
-		echoq "failed."
+		echoq "failed [$?]."
 		EXITSTATUS=$1
 	fi
 }
