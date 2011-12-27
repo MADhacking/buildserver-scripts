@@ -25,10 +25,17 @@ function helpscreen
 	echo "Automatically updates specified build-space(s) or those listed in"
 	echo "${CFGFILE} if BS is all"
 	echo
+	echo "  -b, --quiet-build              pass the --quiet-build flag to emerge"
+	echo "                                 to suppress most build output" 
 	echo "  -f, --force                    always update the build-space(s) regardless"
 	echo "                                 of the current buid-space state"
+	echo "  -k, --keep-going               pass the --keep-going flag to emerge to"
+	echo "                                 cause emerge not to stop if a build error"
+	echo "                                 is encountered" 
 	echo "  -p, --pretend                  do not perform any actions simply list the"
 	echo "                                 build-space(s) which would be updated"
+	echo "  -r, --remerge-all              remerge all installed packages instead"
+	echo "                                 of performing an update"
 	echo "      --help                     display this help and exit"
     echo "      --version                  output version information and exit"
 }
@@ -37,6 +44,7 @@ function helpscreen
 CFGFILE=/etc/buildspaces
 CMDNAME=$(basename ${0})
 EXITSTATUS=0
+UPDATE_FLAGS=""
 
 # If we can read the config file do so
 [[ -r ${CFGFILE} ]] && source ${CFGFILE}
@@ -45,13 +53,20 @@ EXITSTATUS=0
 while (( $# > 0 ))
 do
 	case $1 in
+		-b|--quiet-build)
+			UPDATE_FLAGS="${UPDATE_FLAGS} --quiet-build"
+		;;			
 	    -f|--force)
 			FORCE=1
-			shift 1
+	    ;;
+	    -k|--keep-going)
+	    	UPDATE_FLAGS="${UPDATE_FLAGS} --keep-going"
 	    ;;
 	    -p|--pretend)
 			PRETEND=1
-			shift 1
+	    ;;
+		-r|--remerge-all)
+	    	UPDATE_FLAGS="${UPDATE_FLAGS} --remerge-all"
 	    ;;
 			
 		--version)
@@ -66,9 +81,9 @@ do
 		*)
 			# Add this build-space to the list of build-spaces
 			[[ -z ${BUILDSPACES} ]] && BUILDSPACES=$1 || BUILDSPACES="${BUILDSPACES} $1"
-			shift 1
 		;;
 	esac
+	shift 1
 done
 
 # If we can't read the config file complain and quit
@@ -102,7 +117,7 @@ for BUILDSPACE in ${BUILDSPACES}; do
 		else
 			echo -n "Updating the [native] ${BUILDSPACE} build-space..."
 			if [[ -z ${PRETEND} ]]; then
-				chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+				chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}
 				if (( ! $? )); then
 					echo "ok." 
 					# Set the updated "flag"
@@ -123,7 +138,7 @@ for BUILDSPACE in ${BUILDSPACES}; do
 		else
 			echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
 			if [[ -z ${PRETEND} ]]; then
-				linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet
+				linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}
 				if (( ! $? )); then
 					echo "ok." 
 					# Set the updated "flag"
