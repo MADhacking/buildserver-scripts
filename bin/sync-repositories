@@ -25,12 +25,17 @@ function helpscreen
 	echo "Synchronises \"live\", testing or stable repositories ensuring that patch-sets,"
 	echo "overlays, portage trees, packages and kernels are synchronised simultaneously."
 	echo
+	echo "  -e, --send-email               send an email of the synchronisation logs to the"
+	echo "                                 email address specified in ${CFGFILE}"
 	echo "  -k, --keep-going               continue performing tasks even if a previous"
 	echo "                                 task fails to complete correctly."
 	echo "  -l, --sync-live                synchronise the \"live\" portage repository"
 	echo "                                 with the remote Gentoo portage repository"
 	echo "  -n, --no-auto                  do not perform any automatic actions regardless"
 	echo "                                 of AUTOxxx settings in ${CFGFILE}"
+	echo "  -q, --quiet                    do not produce any output during the"
+	echo "                                 update process (implies --send-email)"
+	echo "                                 (implied if not being run from a TTY)"
 	echo "  -t BS [BS]...,                 synchronise the testing portage repository"
 	echo "  --sync-test BS [BS]...         for the BS build-space(s) with the \"live\""
 	echo "                                 portage repository, or all can be specified"
@@ -50,23 +55,18 @@ function helpscreen
     echo "      --version                  output version information and exit"
 }
 
-function echoq
-{
-	[[ -z ${QUIET} && -z ${2} ]] && echo "$1" 
-	[[ -z ${QUIET} && -n ${2} ]] && echo $1 "$2"
-}
-
 function okorfail
 {
 	if (( ! $? )); then
-		echoq "ok." 
+		echo "ok." 
 	else
-		echoq "failed [$?]."
+		echo "failed [$?]."
 		EXITSTATUS=$1
 	fi
 }
 
 # Init global vars
+OUTLOGLIB=/usr/lib/outlogger.sh
 CFGFILE=/etc/buildspaces
 CMDNAME=$(basename ${0})
 EXITSTATUS=0
@@ -78,6 +78,9 @@ EXITSTATUS=0
 while (( $# > 0 ))
 do
 	case $1 in
+	    -e|--send-email)
+			SENDEMAIL=1
+	    ;;
 	    -k|--keep-going)
 			KEEPGOING=1
 			shift 1
@@ -89,6 +92,10 @@ do
 	    -n|--no-auto)
 	    	unset AUTOPATCHSYNC AUTOLAYMANSYNC AUTOPATCHTEST AUTOREBUILD 
 			shift 1
+	    ;;
+	    -q|--quiet)
+			QUIET=1
+			SENDEMAIL=1
 	    ;;
 	    -t|--sync-test)
 	    	TESTREPO=1
@@ -146,16 +153,22 @@ done
 # If we can't read the config file we should complain and quit
 [[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
 
+# Include and initialise logging library
+[[ ! -r ${OUTLOGLIB} ]] && echo "ERROR: Unable to load outlogger library from ${OUTLOGLIB}" >&2 && exit 1
+[[ -z "${LOGPATH}" ]] && echo "ERROR: No LOGPATH set in ${CFGFILE}" >&2 && exit 1
+source ${OUTLOGLIB}
+init_logging ${LOGPATH}
+
 # Check configuration
-[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 2
+[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 1
 if [[ -n ${LIVEREPO} ]]; then
-	[[ -z ${GENTOORSYNC} ]] && echo "ERROR: No GENTOORSYNC set in ${CFGFILE}" >&2 && exit 2
-	[[ -z ${GENTOORSOPT} ]] && echo "ERROR: No GENTOORSOPT set in ${CFGFILE}" >&2 && exit 2
+	[[ -z ${GENTOORSYNC} ]] && echo "ERROR: No GENTOORSYNC set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${GENTOORSOPT} ]] && echo "ERROR: No GENTOORSOPT set in ${CFGFILE}" >&2 && exit 1
 fi
 if [[ -n ${TESTREPO} || -n ${STABLEREPO} ]]; then
 	[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
-		&& echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 2
-	[[ -z ${REPORSOPT} ]] && echo "ERROR: No REPORSOPT set in ${CFGFILE}" >&2 && exit 2
+		&& echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${REPORSOPT} ]] && echo "ERROR: No REPORSOPT set in ${CFGFILE}" >&2 && exit 1
 fi
 
 # Check request
@@ -164,27 +177,42 @@ fi
 [[ ${AUTOREBUILD} == "yes" && -n ${TESTREPO} && -n ${REBUILDCACHE} ]] \
 	&& echo "ERROR: AUTOREBUILD=\"yes\" set in ${CFGFILE} with --sync-test and --rebuild-caches makes no sense!" >&2 && exit 2
 
+# If we are not being run from a TTY then set SENDMAIL and QUIET
+tty -s
+if (( $? )); then
+	SENDEMAIL=1
+	QUIET=1
+fi  
+
+# If we are running in quiet mode then redirect output to the log
+# otherwise tee output to the log and stdout
+if [[ -n ${QUIET} ]]; then
+	redirect_output_to_file update.out.log
+else
+	tee_output_to_file_stdout update.out.log
+fi
+
 # If we have been asked to sync the "live" repository...
 if [[ -n ${LIVEREPO} ]]; then
-	echoq -n "Synchronising the \"live\" portage tree..."
-	rsync ${GENTOORSYNC} ${REPOSROOT}/live/portage ${GENTOORSOPT}
+	echo -n "Synchronising the \"live\" portage tree..."
+	exec_and_log live_portage_rsync "rsync ${GENTOORSYNC} ${REPOSROOT}/live/portage ${GENTOORSOPT}"
 	okorfail 3
 	if [[ ${AUTOLAYMANSYNC} == "yes" ]]; then
-		echoq -n "Synchronising the layman overlays..."
-		layman --sync-all  --quietness=1
-		okorfail 3
+		echo -n "Synchronising the layman overlays..."
+		exec_and_log live_layman_sync "layman --sync-all"
+		okorfail 4
 	fi
 	if [[ ${AUTOPATCHSYNC} == "yes" ]]; then
-		echoq -n "Synchronising the auto-patch patch-sets..."
-		auto-patch-portage ${AUTOPATCHSYNCOPTS} --sync 
-		okorfail 3
+		echo -n "Synchronising the auto-patch patch-sets..."
+		exec_and_log live_patchset_sync "auto-patch-portage ${AUTOPATCHSYNCOPTS} --sync" 
+		okorfail 5
 	fi
 	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && exit ${EXITSTATUS}
 fi
 
 # If we have been asked to sync a testing repository...
 if [[ -n ${TESTREPO} ]]; then
-	[[ -n ${LIVEREPO} ]] && echoq
+	[[ -n ${LIVEREPO} ]] && echo
 	# If we have been asked to sync "all" repositories then assemble a list
 	[[ ${TESTREPOS} = "all" ]] && TESTREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
 
@@ -202,40 +230,41 @@ if [[ -n ${TESTREPO} ]]; then
 		[[ -f ${REPOSROOT}/testing/${REPO}/updated ]] && rm ${REPOSROOT}/testing/${REPO}/updated
 			 
  		# Synchronise the "live" portage tree to the testing repository 
-		[[ -n ${DONEONE} ]] && echoq 
-		echoq -n "Synchronising the \"live\" portage tree to the ${REPO} testing repository..."
-		rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${REPORSOPT}
-		okorfail 4
+		[[ -n ${DONEONE} ]] && echo 
+		echo -n "Synchronising the \"live\" portage tree to the ${REPO} testing repository..."
+		exec_and_log "testing_portage_rsync_${REPO}" "rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${REPORSOPT}"
+		okorfail 6
 		
-		# If they exist then synchronise the "live" patch-sets and overlays too
-		if [[ -d ${REPOSROOT}/live/patch-sets ]]; then
-			echoq -n "Synchronising the \"live\" patch-sets to the ${REPO} testing repository..."
-			mkdir -p ${REPOSROOT}/testing/${REPO}/patch-sets
-			rsync ${REPOSROOT}/live/patch-sets/ ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPORSOPT}
-			okorfail 5
-		fi
+		# If they exist then synchronise the "live" overlays to the "testing" repository
 		if [[ -d ${REPOSROOT}/live/overlays ]]; then
-			echoq -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
+			echo -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
 			mkdir -p ${REPOSROOT}/testing/${REPO}/overlays
-			rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${REPORSOPT}
-			okorfail 6
+			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${REPORSOPT}"
+			okorfail 7
+		fi
+		# If they exist then synchronise the "live" patch-sets to the "testing" repository
+		if [[ -d ${REPOSROOT}/live/patch-sets ]]; then
+			echo -n "Synchronising the \"live\" patch-sets to the ${REPO} testing repository..."
+			mkdir -p ${REPOSROOT}/testing/${REPO}/patch-sets
+			exec_and_log "testing_patchsets_rsync_${REPO}" "rsync ${REPOSROOT}/live/patch-sets/ ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPORSOPT}"
+			okorfail 8
 		fi
 		# Then run auto-patch-portage if instructed to do so		
 		if [[ ${AUTOPATCHTEST} == "yes" ]]; then
-			echoq -n "Running auto-patch-portage on the ${REPO} testing repository..."
-			auto-patch-portage ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage
-			okorfail 7
+			echo -n "Running auto-patch-portage on the ${REPO} testing repository..."
+			exec_and_log "auto-patch-portage_${REPO}" "auto-patch-portage ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage"
+			okorfail 9
 		fi
 		# And finally rebuild-portage-caches if instructed to do so
 		if [[ ${AUTOREBUILD} == "yes" ]]; then
 			if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] ]]; then
-				echoq -n "Running rebuild-portage-caches in the ${REPO} build-space..."
-				chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches --quiet
+				echo -n "Running rebuild-portage-caches in the ${REPO} build-space..."
+				exec_and_log "rebuild-portage-caches_${REPO}" "chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 			else
-				echoq -n "Running linux32 rebuild-portage-caches in the ${REPO} build-space..."
-				linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches --quiet
+				echo -n "Running linux32 rebuild-portage-caches in the ${REPO} build-space..."
+				exec_and_log "rebuild-portage-caches_${REPO}" "linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 			fi
-			okorfail 8
+			okorfail 10
 		fi
 		
 		DONEONE=1
@@ -246,8 +275,8 @@ fi
 
 # If we have been asked to patch a testing repository...
 if [[ -n ${PATCHTEST} ]]; then
-	[[ -n ${LIVEREPO} || -n ${TESTREPO} ]] && echoq -e "\n"
-	# If we have been asked to sync "all" repositories then assemble a list
+	[[ -n ${LIVEREPO} || -n ${TESTREPO} ]] && echo -e "\n"
+	# If we have been asked to patch "all" repositories then assemble a list
 	[[ ${PATCHREPOS} = "all" ]] && PATCHREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
 
 	# Loop through the repositories...
@@ -260,10 +289,10 @@ if [[ -n ${PATCHTEST} ]]; then
 		   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
 		# Run auto-patch-portage on the testing repository
-		[[ -n ${DONEONE} ]] && echoq -e "\n" 
-		echoq -e "Running auto-patch-portage on the ${REPO} testing repository\n"
-		auto-patch-portage ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage
-		(( $? )) && EXITSTATUS=9
+		[[ -n ${DONEONE} ]] && echo -e "\n" 
+		echo -n "Running auto-patch-portage on the ${REPO} testing repository..."
+		exec_and_log "auto-patch-portage_${REPO}" "auto-patch-portage ${AUTOPATCHTESTOPTS} --portage-tree ${REPOSROOT}/testing/${REPO}/portage"
+		okorfail 11
 		DONEONE=1
 	done
 	unset DONEONE
@@ -272,7 +301,7 @@ fi
 
 # If we have been asked to rebuild caches for a buildspace...
 if [[ -n ${REBUILDCACHE} ]]; then
-	[[ -n ${LIVEREPO} || -n ${PATCHTEST} || -n ${TESTREPO} ]] && echoq -e "\n"
+	[[ -n ${LIVEREPO} || -n ${PATCHTEST} || -n ${TESTREPO} ]] && echo -e "\n"
 	# If we have been asked to rebuild "all" buildspace caches then assemble a list
 	[[ ${REBUILDREPOS} = "all" ]] && REBUILDREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
 
@@ -286,15 +315,15 @@ if [[ -n ${REBUILDCACHE} ]]; then
 		   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
 		# Run rebuild-portage-caches in the testing buildspace
-		[[ -n ${DONEONE} ]] && echoq -e "\n" 
+		[[ -n ${DONEONE} ]] && echo -e "\n" 
 		if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] ]]; then
-			echoq -e "\nRunning rebuild-portage-caches in the ${REPO} build-space..."
-			chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches
+			echo -e "\nRunning rebuild-portage-caches in the ${REPO} build-space..."
+			exec_and_log "rebuild-portage-caches_${REPO}" chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 		else
-			echoq -e "\nRunning linux32 rebuild-portage-caches in the ${REPO} build-space..."
-			linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches
+			echo -e "\nRunning linux32 rebuild-portage-caches in the ${REPO} build-space..."
+			exec_and_log "rebuild-portage-caches_${REPO}" linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 		fi
-		(( $? )) && EXITSTATUS=10
+		okorfail 12
 		DONEONE=1
 	done
 	unset DONEONE
@@ -303,7 +332,7 @@ fi
 
 # If we have been asked to sync a stable repository...
 if [[ -n ${STABLEREPO} ]]; then
-	[[ -n ${LIVEREPO} || -n ${PATCHTEST} || -n ${TESTREPO} || -n ${REBUILDCACHE} ]] && echoq
+	[[ -n ${LIVEREPO} || -n ${PATCHTEST} || -n ${TESTREPO} || -n ${REBUILDCACHE} ]] && echo
 	# If we have been asked to sync "all" repositories then assemble a list
 	[[ ${STABLEREPOS} = "all" ]] && STABLEREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
 
@@ -318,43 +347,57 @@ if [[ -n ${STABLEREPO} ]]; then
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
 
 		# Check that the "updated flag" has been set or the --force option specified
-		[[ -n ${DONEONE} ]] && echoq 
+		[[ -n ${DONEONE} ]] && echo 
 		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
 			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping."
 		else			 
-	 		# Synchronise the testing configurations to the stable repository 
-			echoq -n "Synchronising the testing configurations to the ${REPO} stable repository..."
-			rsync ${REPOSROOT}/testing/${REPO}/conf/ ${REPOSROOT}/stable/${REPO}/conf/ ${REPORSOPT}
-			okorfail 11
-	 		# Synchronise the testing portage tree to the stable repository 
-			echoq -n "Synchronising the testing portage tree to the ${REPO} stable repository..."
-			rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${REPORSOPT}
-			okorfail 12
-			# If they exist synchronise the testing patch-sets and overlays too
-			if [[ -d ${REPOSROOT}/testing/${REPO}/patch-sets ]]; then
-				echoq -n "Synchronising the testing patch-sets to the ${REPO} stable repository..."
-				mkdir -p ${REPOSROOT}/stable/${REPO}/patch-sets
-				rsync ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPOSROOT}/stable/${REPO}/patch-sets/ ${REPORSOPT}
-				okorfail 13
-			fi
+	 		# Synchronise the "testing" configurations to the "stable" repository 
+			echo -n "Synchronising the testing configurations to the ${REPO} stable repository..."
+			exec_and_log "stable_configs_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/conf/ ${REPOSROOT}/stable/${REPO}/conf/ ${REPORSOPT}"
+			okorfail 13
+	 		# Synchronise the "testing" portage tree to the "stable" repository 
+			echo -n "Synchronising the testing portage tree to the ${REPO} stable repository..."
+			exec_and_log "stable_portage_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${REPORSOPT}"
+			okorfail 14
+			# If they exist synchronise the "testing" overlays to the "stable" repository
 			if [[ -d ${REPOSROOT}/testing/${REPO}/overlays ]]; then
-				echoq -n "Synchronising the testing overlays to the ${REPO} stable repository..."
+				echo -n "Synchronising the testing overlays to the ${REPO} stable repository..."
 				mkdir -p ${REPOSROOT}/stable/${REPO}/overlays
-				rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${REPORSOPT}
-				okorfail 14
+				exec_and_log "stable_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${REPORSOPT}"
+				okorfail 15
+			fi
+			# If they exist synchronise the "testing" patch-sets to the "stable" repository
+			if [[ -d ${REPOSROOT}/testing/${REPO}/patch-sets ]]; then
+				echo -n "Synchronising the testing patch-sets to the ${REPO} stable repository..."
+				mkdir -p ${REPOSROOT}/stable/${REPO}/patch-sets
+				exec_and_log "stable_patchsets_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPOSROOT}/stable/${REPO}/patch-sets/ ${REPORSOPT}
+				okorfail 16
 			fi
 			# Then synchronise packages and kernels
-			echoq -n "Synchronising the testing packages to the ${REPO} stable repository..."
-			rsync ${REPOSROOT}/testing/${REPO}/packages/ ${REPOSROOT}/stable/${REPO}/packages/ ${REPORSOPT}
-			okorfail 15
-			echoq -n "Synchronising the testing kernels to the ${REPO} stable repository..."
-			rsync ${REPOSROOT}/testing/${REPO}/kernels/ ${REPOSROOT}/stable/${REPO}/kernels/ ${REPORSOPT}
-			okorfail 16
+			echo -n "Synchronising the testing packages to the ${REPO} stable repository..."
+			exec_and_log "stable_packages_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/packages/ ${REPOSROOT}/stable/${REPO}/packages/ ${REPORSOPT}"
+			okorfail 17
+			echo -n "Synchronising the testing kernels to the ${REPO} stable repository..."
+			exec_and_log "stable_kernels_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/kernels/ ${REPOSROOT}/stable/${REPO}/kernels/ ${REPORSOPT}"
+			okorfail 18
 		fi
 		
 		DONEONE=1
 	done
 	unset DONEONE
+fi
+
+# Bzip any log files larger than 100k
+bzip_large_logs 102400
+
+# If we were asked to send email send the logs to root
+if [[ -n ${SENDEMAIL} ]]; then
+	send_logs_by_email "Synchronising repositories" root
+fi
+
+# If we aren't running in quiet mode show a list of the log files we generated during the update
+if [[ -z ${QUIET} ]]; then
+	display_log_paths
 fi
 
 exit ${EXITSTATUS}

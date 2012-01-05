@@ -10,9 +10,12 @@ BUILDSPACES32="x86-32bit-server x86-32bit-workstation"
 # Path to the directory containing the repositories 
 REPOSROOT="/mnt/repositories"
 
+# Base path for logs
+LOGPATH="/var/log/buildserver"
+
 # Gentoo rsync location and options
 GENTOORSYNC="rsync.gentoo.org::gentoo-portage"
-GENTOORSOPT="--quiet --delete --archive --no-D --delete-during"
+GENTOORSOPT="--delete --archive --no-D --delete-during"
 
 # Should we run layman --sync-all when synchronising the live repository
 AUTOLAYMANSYNC="no"
@@ -20,7 +23,7 @@ AUTOLAYMANSYNC="no"
 # Should we run auto-patch --sync when synchronising the live repository
 # and if so which options we should pass
 AUTOPATCHSYNC="no"
-AUTOPATCHSYNCOPTS="--quiet --sync"
+AUTOPATCHSYNCOPTS="--sync"
 
 # Repository rsync options
 REPORSOPT="--quiet --delete --archive --no-D --delete-during"
@@ -28,7 +31,7 @@ REPORSOPT="--quiet --delete --archive --no-D --delete-during"
 # Should we run auto-patch when synchronising a testing repository
 # and if so which options we should pass
 AUTOPATCHTEST="no"
-AUTOPATCHTESTOPTS="--quiet --copy-files --apply-patches"
+AUTOPATCHTESTOPTS="--copy-files --apply-patches"
 
 # Should we run rebuild-portage-caches inside the build-space when
 # synchronising a testing repository.
