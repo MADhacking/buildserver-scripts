@@ -42,7 +42,7 @@ function helpscreen
 	echo "  -p BS [BS]...,                 run auto-patch-portage on the testing portage"
 	echo "  --patch-test BS [BS]...        repository for the BS build-space(s), or all"
 	echo "                                 can be specified"
-	echo "  -r BS [BS]...,                 run rebuild-portage-ceches in the testing"
+	echo "  -r BS [BS]...,                 run rebuild-portage-caches in the testing"
 	echo "  --rebuild-caches BS [BS]...    repository for the BS build-space(s), or all"
 	echo "                                 can be specified"
 	echo "  -s BS [BS]...,                 synchronise the stable configuration, portage,"
