@@ -318,10 +318,10 @@ if [[ -n ${REBUILDCACHE} ]]; then
 		[[ -n ${DONEONE} ]] && echo -e "\n" 
 		if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] ]]; then
 			echo -e "\nRunning rebuild-portage-caches in the ${REPO} build-space..."
-			exec_and_log "rebuild-portage-caches_${REPO}" chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
+			exec_and_log "rebuild-portage-caches_${REPO}" "chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 		else
 			echo -e "\nRunning linux32 rebuild-portage-caches in the ${REPO} build-space..."
-			exec_and_log "rebuild-portage-caches_${REPO}" linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
+			exec_and_log "rebuild-portage-caches_${REPO}" "linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
 		fi
 		okorfail 12
 		DONEONE=1
@@ -370,7 +370,7 @@ if [[ -n ${STABLEREPO} ]]; then
 			if [[ -d ${REPOSROOT}/testing/${REPO}/patch-sets ]]; then
 				echo -n "Synchronising the testing patch-sets to the ${REPO} stable repository..."
 				mkdir -p ${REPOSROOT}/stable/${REPO}/patch-sets
-				exec_and_log "stable_patchsets_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPOSROOT}/stable/${REPO}/patch-sets/ ${REPORSOPT}
+				exec_and_log "stable_patchsets_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/patch-sets/ ${REPOSROOT}/stable/${REPO}/patch-sets/ ${REPORSOPT}"
 				okorfail 16
 			fi
 			# Then synchronise packages and kernels
