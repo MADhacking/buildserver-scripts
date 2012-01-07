@@ -55,6 +55,25 @@ function helpscreen
     echo "      --version                  output version information and exit"
 }
 
+function finish_up
+{
+	# Bzip any log files larger than 100k
+	bzip_large_logs 102400
+	
+	# If we were asked to send email send the logs to root
+	if [[ -n ${SENDEMAIL} ]]; then
+		send_logs_by_email "Synchronising repositories" root
+	fi
+	
+	# If we aren't running in quiet mode show a list of the log files we generated during the update
+	if [[ -z ${QUIET} ]]; then
+		echo
+		display_log_paths
+	fi
+	
+	exit ${EXITSTATUS}
+}
+
 function okorfail
 {
 	if (( ! $? )); then
@@ -187,9 +206,9 @@ fi
 # If we are running in quiet mode then redirect output to the log
 # otherwise tee output to the log and stdout
 if [[ -n ${QUIET} ]]; then
-	redirect_output_to_file update.out.log
+	redirect_output_to_file sync-repositories.out.log
 else
-	tee_output_to_file_stdout update.out.log
+	tee_output_to_file_stdout sync-repositories.out.log
 fi
 
 # If we have been asked to sync the "live" repository...
@@ -207,7 +226,7 @@ if [[ -n ${LIVEREPO} ]]; then
 		exec_and_log live_patchset_sync "auto-patch-portage ${AUTOPATCHSYNCOPTS} --sync" 
 		okorfail 5
 	fi
-	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && exit ${EXITSTATUS}
+	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && finish_up
 fi
 
 # If we have been asked to sync a testing repository...
@@ -270,7 +289,7 @@ if [[ -n ${TESTREPO} ]]; then
 		DONEONE=1
 	done
 	unset DONEONE
-	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && exit ${EXITSTATUS}
+	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && finish_up
 fi
 
 # If we have been asked to patch a testing repository...
@@ -296,7 +315,7 @@ if [[ -n ${PATCHTEST} ]]; then
 		DONEONE=1
 	done
 	unset DONEONE
-	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && exit ${EXITSTATUS}
+	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && finish_up
 fi		
 
 # If we have been asked to rebuild caches for a buildspace...
@@ -327,7 +346,7 @@ if [[ -n ${REBUILDCACHE} ]]; then
 		DONEONE=1
 	done
 	unset DONEONE
-	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && exit ${EXITSTATUS}
+	[[ -z ${KEEPGOING} && (( ${EXITSTATUS} != 0 )) ]] && finish_up
 fi		
 
 # If we have been asked to sync a stable repository...
@@ -387,17 +406,4 @@ if [[ -n ${STABLEREPO} ]]; then
 	unset DONEONE
 fi
 
-# Bzip any log files larger than 100k
-bzip_large_logs 102400
-
-# If we were asked to send email send the logs to root
-if [[ -n ${SENDEMAIL} ]]; then
-	send_logs_by_email "Synchronising repositories" root
-fi
-
-# If we aren't running in quiet mode show a list of the log files we generated during the update
-if [[ -z ${QUIET} ]]; then
-	display_log_paths
-fi
-
-exit ${EXITSTATUS}
+finish_up
