@@ -365,7 +365,7 @@ if [[ -n ${STABLEREPO} ]]; then
 		   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
 
-		# Check that the "updated flag" has been set or the --force option specified
+		# Check that the "updated flag" is NOT set, or the --force option specified
 		[[ -n ${DONEONE} ]] && echo 
 		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
 			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping."
