@@ -99,6 +99,7 @@ do
 	case $1 in
 	    -e|--send-email)
 			SENDEMAIL=1
+			shift 1
 	    ;;
 	    -k|--keep-going)
 			KEEPGOING=1
@@ -115,6 +116,7 @@ do
 	    -q|--quiet)
 			QUIET=1
 			SENDEMAIL=1
+			shift 1
 	    ;;
 	    -t|--sync-test)
 	    	TESTREPO=1
