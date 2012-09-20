@@ -59,7 +59,7 @@ function finish_up
 	
 	# If we were asked to send email send the logs to root
 	if [[ -n ${SENDEMAIL} ]]; then
-		send_logs_by_email "Synchronising repositories" root
+		send_logs_by_email "Synchronising repositories" "${ADMIN_EMAIL:-root}"
 	fi
 	
 	# If we aren't running in quiet mode show a list of the log files we generated during the update
