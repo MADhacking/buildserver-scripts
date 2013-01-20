@@ -177,7 +177,8 @@ fi
 if [[ -n ${TESTREPO} || -n ${STABLEREPO} ]]; then
 	[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
 		&& echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 1
-	[[ -z ${REPORSOPT} ]] && echo "ERROR: No REPORSOPT set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${TESTREPORSOPT} ]] && echo "ERROR: No TESTREPORSOPT set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${STABLEREPORSOPT} ]] && echo "ERROR: No STABLEREPORSOPT set in ${CFGFILE}" >&2 && exit 1
 fi
 
 # Check request
@@ -234,14 +235,14 @@ if [[ -n ${TESTREPO} ]]; then
  		# Synchronise the "live" portage tree to the testing repository 
 		[[ -n ${DONEONE} ]] && echo 
 		echo -n "Synchronising the \"live\" portage tree to the ${REPO} testing repository..."
-		exec_and_log "testing_portage_rsync_${REPO}" "rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${REPORSOPT}"
+		exec_and_log "testing_portage_rsync_${REPO}" "rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${TESTREPORSOPT}"
 		okorfail 6
 		
 		# If they exist then synchronise the "live" overlays to the "testing" repository
 		if [[ -d ${REPOSROOT}/live/overlays ]]; then
 			echo -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
 			mkdir -p ${REPOSROOT}/testing/${REPO}/overlays
-			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${REPORSOPT}"
+			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${TESTREPORSOPT}"
 			okorfail 7
 		fi
 		# And finally rebuild-portage-caches if instructed to do so
@@ -316,25 +317,25 @@ if [[ -n ${STABLEREPO} ]]; then
 		else			 
 	 		# Synchronise the "testing" configurations to the "stable" repository 
 			echo -n "Synchronising the testing configurations to the ${REPO} stable repository..."
-			exec_and_log "stable_configs_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/conf/ ${REPOSROOT}/stable/${REPO}/conf/ ${REPORSOPT}"
+			exec_and_log "stable_configs_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/conf/ ${REPOSROOT}/stable/${REPO}/conf/ ${STABLEREPORSOPT}"
 			okorfail 13
 	 		# Synchronise the "testing" portage tree to the "stable" repository 
 			echo -n "Synchronising the testing portage tree to the ${REPO} stable repository..."
-			exec_and_log "stable_portage_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${REPORSOPT}"
+			exec_and_log "stable_portage_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${STABLEREPORSOPT}"
 			okorfail 14
 			# If they exist synchronise the "testing" overlays to the "stable" repository
 			if [[ -d ${REPOSROOT}/testing/${REPO}/overlays ]]; then
 				echo -n "Synchronising the testing overlays to the ${REPO} stable repository..."
 				mkdir -p ${REPOSROOT}/stable/${REPO}/overlays
-				exec_and_log "stable_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${REPORSOPT}"
+				exec_and_log "stable_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${STABLEREPORSOPT}"
 				okorfail 15
 			fi
 			# Then synchronise packages and kernels
 			echo -n "Synchronising the testing packages to the ${REPO} stable repository..."
-			exec_and_log "stable_packages_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/packages/ ${REPOSROOT}/stable/${REPO}/packages/ ${REPORSOPT}"
+			exec_and_log "stable_packages_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/packages/ ${REPOSROOT}/stable/${REPO}/packages/ ${STABLEREPORSOPT}"
 			okorfail 17
 			echo -n "Synchronising the testing kernels to the ${REPO} stable repository..."
-			exec_and_log "stable_kernels_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/kernels/ ${REPOSROOT}/stable/${REPO}/kernels/ ${REPORSOPT}"
+			exec_and_log "stable_kernels_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/kernels/ ${REPOSROOT}/stable/${REPO}/kernels/ ${STABLEREPORSOPT}"
 			okorfail 18
 		fi
 		
