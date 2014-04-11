@@ -23,6 +23,9 @@ GENTOORSOPT="--quiet --delete --archive --no-D --delete-during"
 # Should we run layman --sync-all when synchronising the live repository
 AUTOLAYMANSYNC="no"
 
+# Suffix directory for distributed overlays
+DISTOVLSUFFIX="distributed"
+
 # Repository rsync options
 TESTREPORSOPT="--quiet --delete --archive --no-D --delete-during --exclude=generated"
 STABLEREPORSOPT="--quiet --delete --archive --no-D --delete-during"

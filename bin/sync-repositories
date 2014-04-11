@@ -243,7 +243,7 @@ if [[ -n ${TESTREPO} ]]; then
 		if [[ -d ${REPOSROOT}/live/overlays ]]; then
 			echo -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
 			mkdir -p ${REPOSROOT}/testing/${REPO}/overlays
-			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/ ${TESTREPORSOPT}"
+			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/${DISTOVLSUFFIX}/ ${TESTREPORSOPT}"
 			okorfail 7
 		fi
 		# And finally rebuild-portage-caches if instructed to do so
