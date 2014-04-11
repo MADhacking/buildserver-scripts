@@ -217,7 +217,7 @@ fi
 if [[ -n ${TESTREPO} ]]; then
 	[[ -n ${LIVEREPO} ]] && echo
 	# If we have been asked to sync "all" repositories then assemble a list
-	[[ ${TESTREPOS} = "all" ]] && TESTREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
+	[[ ${TESTREPOS} = "all" ]] && TESTREPOS="${BUILDSPACESXX} ${BUILDSPACES32} ${NONBUILDREPOS}"
 
 	# Loop through the repositories...
 	for REPO in ${TESTREPOS}; do
@@ -226,8 +226,9 @@ if [[ -n ${TESTREPO} ]]; then
 			echo "ERROR: No repository at ${REPOSROOT}/testing/${REPO}" >&2 && exit 2
 		fi
 		[[ ! " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] && \
-		   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
-			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
+   	   	   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] && \
+		   ! " ${NONBUILDREPOS} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
+			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX, BUILDSPACES32 or NONBUILDREPOS" >&2 && exit 2
 			 
 		# Clear the updated "flag"
 		[[ -f ${REPOSROOT}/testing/${REPO}/updated ]] && rm ${REPOSROOT}/testing/${REPO}/updated
@@ -250,11 +251,12 @@ if [[ -n ${TESTREPO} ]]; then
 			if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] ]]; then
 				echo -n "Running rebuild-portage-caches in the ${REPO} build-space..."
 				exec_and_log "rebuild-portage-caches_${REPO}" "chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
-			else
+				okorfail 10
+			elif [[ " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]]; then
 				echo -n "Running linux32 rebuild-portage-caches in the ${REPO} build-space..."
 				exec_and_log "rebuild-portage-caches_${REPO}" "linux32 chroot ${BUILDSPACEROOT}/${REPO} /usr/bin/rebuild-portage-caches"
+				okorfail 10
 			fi
-			okorfail 10
 		fi
 		
 		DONEONE=1
@@ -298,7 +300,7 @@ fi
 if [[ -n ${STABLEREPO} ]]; then
 	[[ -n ${LIVEREPO} || -n ${TESTREPO} || -n ${REBUILDCACHE} ]] && echo
 	# If we have been asked to sync "all" repositories then assemble a list
-	[[ ${STABLEREPOS} = "all" ]] && STABLEREPOS="${BUILDSPACESXX} ${BUILDSPACES32}"
+	[[ ${STABLEREPOS} = "all" ]] && STABLEREPOS="${BUILDSPACESXX} ${BUILDSPACES32} ${NONBUILDREPOS}"
 
 	# Loop through the repositories...
 	for REPO in ${STABLEREPOS}; do
@@ -307,8 +309,9 @@ if [[ -n ${STABLEREPO} ]]; then
 			echo "ERROR: No repository at ${REPOSROOT}/testing/${REPO}" >&2 && exit 2
 		fi
 		[[ ! " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] && \
-		   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
-			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
+   	   	   ! " ${BUILDSPACES32} " =~ [[:blank:]]${REPO}[[:blank:]] && \
+		   ! " ${NONBUILDREPOS} " =~ [[:blank:]]${REPO}[[:blank:]] ]] \
+			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX, BUILDSPACES32 or NONBUILDREPOS" >&2 && exit 2
 
 		# Check that the "updated flag" is NOT set, or the --force option specified
 		[[ -n ${DONEONE} ]] && echo 

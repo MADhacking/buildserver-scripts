@@ -7,6 +7,9 @@ BUILDSPACESXX="x86-64bit-server x86-64bit-workstation"
 # List of build-spaces requiring linux32 to be executed prior to chroot
 BUILDSPACES32="x86-32bit-server x86-32bit-workstation"
 
+# List of repositories without build-spaces
+NONBUILDREPOS="armv6l"
+
 # Path to the directory containing the repositories 
 REPOSROOT="/mnt/repositories"
 
