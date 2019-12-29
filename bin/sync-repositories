@@ -2,21 +2,11 @@
 
 function versioninfo
 {
-	VERSION="$Revision$"
-	VERSION="${VERSION%\ \$}"; VERSION="${VERSION#\:}"; VERSION="${VERSION##\ }"
-	VERSION="(CVS revision $VERSION)"
-	
-	NAME="$Name$"
-	NAME="${NAME%\ \$}"; NAME="${NAME#\:}"; NAME="${NAME##\ }"; NAME="${NAME##release-}"; NAME="${NAME//-/.}"
-	[[ -n $NAME ]] && NAME="Version $NAME "
-
-	echo ${CMDNAME}
-	echo ${NAME}${VERSION}
-
-	echo -e "\nCopyright (C) 2010 Hacking Networked Solutions"
-	echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
-	echo "This is free software: you are free to change and redistribute it."
-	echo "There is NO WARRANTY, to the extent permitted by law."
+    echo "$(basename "${0}") - version 1.0.0"
+    echo -e "\nCopyright (C) 2010-2019 Hacking Networked Solutions"
+    echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
+    echo "This is free software: you are free to change and redistribute it."
+    echo "There is NO WARRANTY, to the extent permitted by law."
 }
 
 function helpscreen
@@ -52,27 +42,42 @@ function helpscreen
     echo "      --version                  output version information and exit"
 }
 
+function die
+{
+    local msg ev
+    msg="ERROR: ${1}"
+    ev="${2}"
+    
+    if [[ -z "${ev}" ]] || (( ev < 1 )); then
+        ev=1
+    fi
+    
+    echo "${msg}" >&2
+    exit "${ev}"
+}
+
 function finish_up
 {
 	# Bzip any log files larger than 100k
 	bzip_large_logs 102400
 	
 	# If we were asked to send email send the logs to root
-	if [[ -n ${SENDEMAIL} ]]; then
+	if [[ -n "${SENDEMAIL}" ]]; then
 		send_logs_by_email "Synchronising repositories" "${ADMIN_EMAIL:-root}"
 	fi
 	
 	# If we aren't running in quiet mode show a list of the log files we generated during the update
-	if [[ -z ${QUIET} ]]; then
+	if [[ -z "${QUIET}" ]]; then
 		echo
 		display_log_paths
 	fi
 	
-	exit ${EXITSTATUS}
+	exit "${EXITSTATUS}"
 }
 
 function okorfail
 {
+    # shellcheck disable=SC2181
 	if (( ! $? )); then
 		echo "ok." 
 	else
@@ -82,13 +87,14 @@ function okorfail
 }
 
 # Init global vars
-OUTLOGLIB=/usr/lib/outlogger.sh
-CFGFILE=/etc/buildspaces
-CMDNAME=$(basename ${0})
+OUTLOGLIB="/usr/lib/outlogger.sh"
+CFGFILE="/etc/buildspaces"
+CMDNAME="$(basename "${0}")"
 EXITSTATUS=0
 
 # If the config file exists and we can read it do so.
-[[ -r ${CFGFILE} ]] && source ${CFGFILE}
+# shellcheck disable=SC1090
+[[ -r "${CFGFILE}" ]] && source "${CFGFILE}"
 
 # Process command line switches
 while (( $# > 0 ))
@@ -118,27 +124,27 @@ do
 	    -t|--sync-test)
 	    	TESTREPO=1
 			shift 1
-			while [[ (( $# > 0 )) && ${1::1} != "-" ]]
+			while [[ (( $# -gt 0 )) && ${1::1} != "-" ]]
 			do
-				[[ -z ${TESTREPOS} ]] && TESTREPOS=$1 || TESTREPOS="${TESTREPOS} $1"
+				[[ -z "${TESTREPOS}" ]] && TESTREPOS=$1 || TESTREPOS="${TESTREPOS} $1"
 				shift 1
 			done
 		;;
 	    -r|--rebuild-caches)
 	    	REBUILDCACHE=1
 			shift 1
-			while [[ (( $# > 0 )) && ${1::1} != "-" ]]
+			while [[ (( $# -gt 0 )) && ${1::1} != "-" ]]
 			do
-				[[ -z ${REBUILDREPOS} ]] && REBUILDREPOS=$1 || REBUILDREPOS="${REBUILDREPOS} $1"
+				[[ -z "${REBUILDREPOS}" ]] && REBUILDREPOS=$1 || REBUILDREPOS="${REBUILDREPOS} $1"
 				shift 1
 			done
 		;;
 	    -s|--sync-stable)
 	    	STABLEREPO=1
 			shift 1
-			while [[ (( $# > 0 )) && ${1::1} != "-" ]]
+			while [[ (( $# -gt 0 )) && ${1::1} != "-" ]]
 			do
-				[[ -z ${STABLEREPOS} ]] && STABLEREPOS=$1 || STABLEREPOS="${STABLEREPOS} $1"
+				[[ -z "${STABLEREPOS}" ]] && STABLEREPOS=$1 || STABLEREPOS="${STABLEREPOS} $1"
 				shift 1
 			done
 		;;
@@ -160,34 +166,33 @@ do
 done
 
 # If we can't read the config file we should complain and quit
-[[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
+[[ -r ${CFGFILE} ]] || die "Unable to read config file at ${CFGFILE}" 1
 
 # Include and initialise logging library
-[[ ! -r ${OUTLOGLIB} ]] && echo "ERROR: Unable to load outlogger library from ${OUTLOGLIB}" >&2 && exit 1
-[[ -z "${LOGPATH}" ]] && echo "ERROR: No LOGPATH set in ${CFGFILE}" >&2 && exit 1
-source ${OUTLOGLIB}
-init_logging ${LOGPATH}
+[[ -r ${OUTLOGLIB} ]] || die "Unable to load outlogger library from ${OUTLOGLIB}" 1
+[[ -z "${LOGPATH}" ]] && die "No LOGPATH set in ${CFGFILE}" 1
+# shellcheck disable=SC1090
+source "${OUTLOGLIB}" 
+init_logging "${LOGPATH}"
 
 # Check configuration
-[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 1
+[[ -z ${REPOSROOT} ]] && die "No REPOSROOT set in ${CFGFILE}" 1
 if [[ -n ${LIVEREPO} ]]; then
-	[[ -z ${GENTOORSYNC} ]] && echo "ERROR: No GENTOORSYNC set in ${CFGFILE}" >&2 && exit 1
-	[[ -z ${GENTOORSOPT} ]] && echo "ERROR: No GENTOORSOPT set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${GENTOORSYNC} ]] && die "No GENTOORSYNC set in ${CFGFILE}" 1
+	[[ -z ${GENTOORSOPT} ]] && die "No GENTOORSOPT set in ${CFGFILE}" 1
 fi
 if [[ -n ${TESTREPO} || -n ${STABLEREPO} ]]; then
-	[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
-		&& echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 1
-	[[ -z ${TESTREPORSOPT} ]] && echo "ERROR: No TESTREPORSOPT set in ${CFGFILE}" >&2 && exit 1
-	[[ -z ${STABLEREPORSOPT} ]] && echo "ERROR: No STABLEREPORSOPT set in ${CFGFILE}" >&2 && exit 1
+	[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] && die "No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" 1
+	[[ -z ${TESTREPORSOPT} ]] && die "No TESTREPORSOPT set in ${CFGFILE}" 1
+	[[ -z ${STABLEREPORSOPT} ]] && die "No STABLEREPORSOPT set in ${CFGFILE}" 1
 fi
 
 # Check request
 [[ ${AUTOREBUILD} == "yes" && -n ${TESTREPO} && -n ${REBUILDCACHE} ]] \
-	&& echo "ERROR: AUTOREBUILD=\"yes\" set in ${CFGFILE} with --sync-test and --rebuild-caches makes no sense!" >&2 && exit 2
+	&& die "AUTOREBUILD=\"yes\" set in ${CFGFILE} with --sync-test and --rebuild-caches makes no sense!" 2
 
 # If we are not being run from a TTY then set SENDMAIL and QUIET
-tty -s
-if (( $? )); then
+if ! tty -s; then
 	SENDEMAIL=1
 	QUIET=1
 fi  
@@ -222,7 +227,7 @@ if [[ -n ${TESTREPO} ]]; then
 	# Loop through the repositories...
 	for REPO in ${TESTREPOS}; do
 		# Check that this appears to be a repository
-		if [[ ! -d ${REPOSROOT}/testing/${REPO} ]]; then
+		if [[ ! -d "${REPOSROOT}/testing/${REPO}" ]]; then
 			echo "ERROR: No repository at ${REPOSROOT}/testing/${REPO}" >&2 && exit 2
 		fi
 		[[ ! " ${BUILDSPACESXX} " =~ [[:blank:]]${REPO}[[:blank:]] && \
@@ -231,10 +236,10 @@ if [[ -n ${TESTREPO} ]]; then
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX, BUILDSPACES32 or NONBUILDREPOS" >&2 && exit 2
 			 
 		# Clear the updated "flag"
-		[[ -f ${REPOSROOT}/testing/${REPO}/updated ]] && rm ${REPOSROOT}/testing/${REPO}/updated
+		[[ -f "${REPOSROOT}/testing/${REPO}/updated" ]] && rm "${REPOSROOT}/testing/${REPO}/updated"
 			 
  		# Synchronise the "live" portage tree to the testing repository 
-		[[ -n ${DONEONE} ]] && echo 
+		[[ -n "${DONEONE}" ]] && echo 
 		echo -n "Synchronising the \"live\" portage tree to the ${REPO} testing repository..."
 		exec_and_log "testing_portage_rsync_${REPO}" "rsync ${REPOSROOT}/live/portage/ ${REPOSROOT}/testing/${REPO}/portage/ ${TESTREPORSOPT}"
 		okorfail 6
@@ -242,7 +247,7 @@ if [[ -n ${TESTREPO} ]]; then
 		# If they exist then synchronise the "live" overlays to the "testing" repository
 		if [[ -d ${REPOSROOT}/live/overlays ]]; then
 			echo -n "Synchronising the \"live\" overlays to the ${REPO} testing repository..."
-			mkdir -p ${REPOSROOT}/testing/${REPO}/overlays
+			mkdir -p "${REPOSROOT}/testing/${REPO}/overlays"
 			exec_and_log "testing_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/live/overlays/ ${REPOSROOT}/testing/${REPO}/overlays/${DISTOVLSUFFIX}/ ${TESTREPORSOPT}"
 			okorfail 7
 		fi
@@ -314,8 +319,8 @@ if [[ -n ${STABLEREPO} ]]; then
 			&& echo "ERROR: ${REPO} does not appear in BUILDSPACESXX, BUILDSPACES32 or NONBUILDREPOS" >&2 && exit 2
 
 		# Check that the "updated flag" is NOT set, or the --force option specified
-		[[ -n ${DONEONE} ]] && echo 
-		if [[ ! -f ${REPOSROOT}/testing/${REPO}/updated && -z ${FORCE} ]]; then
+		[[ -n "${DONEONE}" ]] && echo 
+		if [[ ! -f "${REPOSROOT}/testing/${REPO}/updated" && -z "${FORCE}" ]]; then
 			echo "The ${REPO} build-space has not been updated since the last --sync-test and --force not specified, skipping."
 		else			 
 	 		# Synchronise the "testing" configurations to the "stable" repository 
@@ -327,9 +332,9 @@ if [[ -n ${STABLEREPO} ]]; then
 			exec_and_log "stable_portage_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/portage/ ${REPOSROOT}/stable/${REPO}/portage/ ${STABLEREPORSOPT}"
 			okorfail 14
 			# If they exist synchronise the "testing" overlays to the "stable" repository
-			if [[ -d ${REPOSROOT}/testing/${REPO}/overlays ]]; then
+			if [[ -d "${REPOSROOT}/testing/${REPO}/overlays" ]]; then
 				echo -n "Synchronising the testing overlays to the ${REPO} stable repository..."
-				mkdir -p ${REPOSROOT}/stable/${REPO}/overlays
+				mkdir -p "${REPOSROOT}/stable/${REPO}/overlays"
 				exec_and_log "stable_overlays_rsync_${REPO}" "rsync ${REPOSROOT}/testing/${REPO}/overlays/ ${REPOSROOT}/stable/${REPO}/overlays/ ${STABLEREPORSOPT}"
 				okorfail 15
 			fi

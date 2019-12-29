@@ -2,21 +2,11 @@
 
 function versioninfo
 {
-	VERSION="$Revision$"
-	VERSION="${VERSION%\ \$}"; VERSION="${VERSION#\:}"; VERSION="${VERSION##\ }"
-	VERSION="(CVS revision $VERSION)"
-	
-	NAME="$Name$"
-	NAME="${NAME%\ \$}"; NAME="${NAME#\:}"; NAME="${NAME##\ }"; NAME="${NAME##release-}"; NAME="${NAME//-/.}"
-	[[ -n $NAME ]] && NAME="Version $NAME "
-
-	echo ${CMDNAME}
-	echo ${NAME}${VERSION}
-
-	echo -e "\nCopyright (C) 2010 Hacking Networked Solutions"
-	echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
-	echo "This is free software: you are free to change and redistribute it."
-	echo "There is NO WARRANTY, to the extent permitted by law."
+    echo "$(basename "${0}") - version 1.0.0"
+    echo -e "\nCopyright (C) 2010-2019 Hacking Networked Solutions"
+    echo "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
+    echo "This is free software: you are free to change and redistribute it."
+    echo "There is NO WARRANTY, to the extent permitted by law."
 }
 
 function helpscreen
@@ -40,14 +30,31 @@ function helpscreen
     echo "      --version                  output version information and exit"
 }
 
+function die
+{
+    local msg ev
+    msg="ERROR: ${1}"
+    ev="${2}"
+    
+    if [[ -z "${ev}" ]] || (( ev < 1 )); then
+        ev=1
+    fi
+    
+    echo "${msg}" >&2
+    exit "${ev}"
+}
+
 # Init global vars
-CFGFILE=/etc/buildspaces
-CMDNAME=$(basename ${0})
+BUILDSPACESXX=""
+BUILDSPACES32=""
+CFGFILE="/etc/buildspaces"
+CMDNAME="$(basename "${0}")"
 EXITSTATUS=0
 UPDATE_FLAGS=""
 
 # If we can read the config file do so
-[[ -r ${CFGFILE} ]] && source ${CFGFILE}
+# shellcheck disable=SC1090
+[[ -r "${CFGFILE}" ]] && source "${CFGFILE}"
 
 # Process command line switches
 while (( $# > 0 ))
@@ -73,27 +80,26 @@ do
 			versioninfo
 			exit
 		;;	
-		-*|--*)
+		-*)
 			helpscreen
 			exit
 		;;
 		
 		*)
 			# Add this build-space to the list of build-spaces
-			[[ -z ${BUILDSPACES} ]] && BUILDSPACES=$1 || BUILDSPACES="${BUILDSPACES} $1"
+			[[ -z "${BUILDSPACES}" ]] && BUILDSPACES="$1" || BUILDSPACES="${BUILDSPACES} $1"
 		;;
 	esac
 	shift 1
 done
 
 # If we can't read the config file complain and quit
-[[ ! -r ${CFGFILE} ]] && echo "ERROR: Unable to read config file at ${CFGFILE}" >&2 && exit 1 
+[[ -r "${CFGFILE}" ]] && die "Unable to read config file at ${CFGFILE}" 1 
 
 # Check configuration
-[[ -z ${REPOSROOT} ]] && echo "ERROR: No REPOSROOT set in ${CFGFILE}" >&2 && exit 2
-[[ -z ${BUILDSPACEROOT} ]] && echo "ERROR: No BUILDSPACEROOT set in ${CFGFILE}" >&2 && exit 2
-[[ -z ${BUILDSPACESXX} && -z ${BUILDSPACES32} ]] \
-	 && echo "ERROR: No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" >&2 && exit 2
+[[ -z "${REPOSROOT}" ]] && die "No REPOSROOT set in ${CFGFILE}" 2
+[[ -z "${BUILDSPACEROOT}" ]] && die "No BUILDSPACEROOT set in ${CFGFILE}" 2
+[[ -z "${BUILDSPACESXX}" && -z "${BUILDSPACES32}" ]] && die "No BUILDSPACESXX or BUILDSPACES32 set in ${CFGFILE}" 2
 
 # If we have been asked to update all build-spaces make a list
 [[ ${BUILDSPACES} = "all" ]] && BUILDSPACES="${BUILDSPACESXX} ${BUILDSPACES32}"
@@ -103,25 +109,25 @@ for BUILDSPACE in ${BUILDSPACES}; do
 	# Check that this appears to be a build-space
 	[[ ! " ${BUILDSPACESXX} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] && \
 	   ! " ${BUILDSPACES32} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] ]] \
-		&& echo "ERROR: ${BUILDSPACE} does not appear in BUILDSPACESXX or BUILDSPACES32" >&2 && exit 2
-	[[ ! -d ${BUILDSPACEROOT}/${BUILDSPACE} ]] && \
-		echo "ERROR: No build-space at ${BUILDSPACEROOT}/${BUILDSPACE}" >&2 && exit 2
+		&& die "${BUILDSPACE} does not appear in BUILDSPACESXX or BUILDSPACES32" 2
+	[[ -d "${BUILDSPACEROOT}/${BUILDSPACE}" ]] || die "No build-space at ${BUILDSPACEROOT}/${BUILDSPACE}" 2
 
 	# If the build-space is on the same architecture as the host run update-buildspace
 	# otherwise run linux32 update-buildspace
 	if [[ " ${BUILDSPACESXX} " =~ [[:blank:]]${BUILDSPACE}[[:blank:]] ]]; then
 		# If the build-space has already been successfully updated since the last sync
 		# and the --force flag has not been used then display a warning and skip it.
-		if [[ -f ${REPOSROOT}/testing/${BUILDSPACE}/updated && -z ${FORCE} ]]; then
+		if [[ -f "${REPOSROOT}/testing/${BUILDSPACE}/updated" && -z "${FORCE}" ]]; then
 			echo "Skipping the [native] ${BUILDSPACE} build-space...already updated."
 		else
 			echo -n "Updating the [native] ${BUILDSPACE} build-space..."
-			if [[ -z ${PRETEND} ]]; then
-				chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}
-				if (( ! $? )); then
+			if [[ -z "${PRETEND}" ]]; then
+                # We want ${UPDATE_FLAGS} to split
+                # shellcheck disable=SC2086
+				if chroot "${BUILDSPACEROOT}/${BUILDSPACE}" /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}; then
 					echo "ok." 
 					# Set the updated "flag"
-					touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+					touch "${REPOSROOT}/testing/${BUILDSPACE}/updated"
 				else
 					echo "failed."
 					EXITSTATUS=3
@@ -133,16 +139,17 @@ for BUILDSPACE in ${BUILDSPACES}; do
 	else
 		# If the build-space has already been successfully updated since the last sync
 		# and the --force flag has not been used then display a warning and skip it.
-		if [[ -f ${REPOSROOT}/testing/${BUILDSPACE}/updated && -z ${FORCE} ]]; then
+		if [[ -f "${REPOSROOT}/testing/${BUILDSPACE}/updated" && -z "${FORCE}" ]]; then
 			echo "Skipping the [32-bit] ${BUILDSPACE} build-space...already updated."
 		else
 			echo -n "Updating the [32-bit] ${BUILDSPACE} build-space..."
-			if [[ -z ${PRETEND} ]]; then
-				linux32 chroot ${BUILDSPACEROOT}/${BUILDSPACE} /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}
-				if (( ! $? )); then
+			if [[ -z "${PRETEND}" ]]; then
+			    # We want ${UPDATE_FLAGS} to split
+			    # shellcheck disable=SC2086
+				if linux32 chroot "${BUILDSPACEROOT}/${BUILDSPACE}" /usr/bin/update-buildspace --quiet ${UPDATE_FLAGS}; then
 					echo "ok." 
 					# Set the updated "flag"
-					touch ${REPOSROOT}/testing/${BUILDSPACE}/updated
+					touch "${REPOSROOT}/testing/${BUILDSPACE}/updated"
 				else
 					echo "failed."
 					EXITSTATUS=3
