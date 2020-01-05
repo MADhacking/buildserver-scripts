@@ -47,7 +47,7 @@ function die
 # Init global vars
 BUILDSPACESXX=""
 BUILDSPACES32=""
-CFGFILE="/etc/buildspaces"
+CFGFILE="${CFGFILE:-/etc/buildspaces}"
 CMDNAME="$(basename "${0}")"
 EXITSTATUS=0
 UPDATE_FLAGS=""

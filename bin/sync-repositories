@@ -87,8 +87,8 @@ function okorfail
 }
 
 # Init global vars
-OUTLOGLIB="/usr/lib/outlogger.sh"
-CFGFILE="/etc/buildspaces"
+OUTLOGLIB="${OUTLOGLIB:-/usr/lib/outlogger.sh}"
+CFGFILE="${CFGFILE:-/etc/buildspaces}"
 CMDNAME="$(basename "${0}")"
 EXITSTATUS=0
 
