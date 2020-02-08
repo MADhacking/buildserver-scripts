@@ -4,7 +4,7 @@ on:
   repository_dispatch:
   schedule:
     # min hour day month dow
-    - cron: "10 0 * * 1"
+    - cron: "20 0 * * 1"
 
 jobs:
   action-ebuild-keyword:
